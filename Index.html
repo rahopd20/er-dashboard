@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emergency Dashboard — Royal Angkor International Hospital</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F4FF;--card:#fff;
+  --hdr1:#1a237e;--hdr2:#283593;
+  --tab-on:#1565C0;--tab-off:#ECEFF1;--tab-off-txt:#546E7A;
+  --shadow:0 2px 10px rgba(0,0,0,.07);
+  --amber:#FF6F00;--crimson:#C62828;--blue:#1565C0;
+  --teal:#00838F;--dred:#B71C1C;--dgrn:#2E7D32;--purple:#6A1B9A;
+  --tl1:#D50000;--tl2:#E53935;--tl3:#FB8C00;--tl4:#FDD835;--tl5:#43A047;
+}
+html,body{height:100%;width:100%;overflow:hidden;
+  font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  font-size:12px;background:var(--bg);color:#263238}
+#app{display:grid;
+  grid-template-rows:6vh 5vh 7vh 15vh 30vh 30vh 4vh;
+  height:100vh;width:100%}
+
+/* HEADER */
+#hdr{background:linear-gradient(135deg,var(--hdr1),var(--hdr2));
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.hdr-icon{font-size:22px}
+.hdr-txt h1{font-size:16px;font-weight:700}
+.hdr-txt p{font-size:10px;opacity:.75}
+.hdr-btn{background:transparent;border:1.5px solid rgba(255,255,255,.55);
+  color:#fff;padding:4px 11px;border-radius:8px;cursor:pointer;
+  font-size:11px;transition:background .2s}
+.hdr-btn:hover{background:rgba(255,255,255,.15)}
+
+/* TABS */
+#tabs{background:#E8EDF5;display:flex;align-items:center;
+  padding:0 16px;gap:8px;border-bottom:2px solid #C5CAE9}
+.tab{padding:5px 16px;border:none;border-radius:8px 8px 0 0;
+  cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap}
+.tab.on{background:var(--tab-on);color:#fff}
+.tab.off{background:var(--tab-off);color:var(--tab-off-txt)}
+.tab.off:hover{background:#CFD8DC}
+
+/* FILTER BAR */
+#fbar{background:#fff;display:flex;align-items:center;
+  padding:0 10px;gap:6px;border-bottom:1px solid #E0E0E0;overflow:hidden}
+.fg{display:flex;align-items:center;gap:6px;width:100%}
+select,.fbtn{height:27px;border:1px solid #CFD8DC;border-radius:6px;
+  font-size:11px;padding:0 7px;background:#FAFAFA;color:#263238;cursor:pointer;outline:none}
+select:focus{border-color:var(--blue)}
+.svc-grp{display:flex;gap:3px}
+.svc{height:26px;padding:0 8px;border:1px solid #CFD8DC;border-radius:6px;
+  font-size:11px;cursor:pointer;background:#ECEFF1;color:#546E7A;transition:all .15s}
+.svc.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.fapply{height:27px;padding:0 11px;background:var(--blue);color:#fff;
+  border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer}
+.fapply:hover{background:#0D47A1}
+.freset{height:27px;padding:0 9px;background:#ECEFF1;color:#546E7A;
+  border:1px solid #CFD8DC;border-radius:6px;font-size:11px;cursor:pointer}
+.flbl{font-size:11px;color:#546E7A;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:270px;margin-left:6px}
+.chklbl{display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer}
+.chklbl input{width:13px;height:13px}
+
+/* KPI ROW */
+#krow{display:grid;grid-template-columns:repeat(7,1fr);
+  gap:7px;padding:6px 10px;align-items:stretch}
+.kcard{background:var(--card);border-radius:12px;box-shadow:var(--shadow);
+  border-left:4px solid #ccc;padding:6px 8px;
+  display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.klbl{font-size:10px;color:#607D8B;font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px}
+.kval{font-size:22px;font-weight:700;line-height:1.1}
+.ksub{font-size:10px;color:#90A4AE;min-height:13px}
+.ktriage-head{font-size:11px;font-weight:700;color:var(--dred);line-height:1.3}
+.tmini{height:6px;border-radius:3px;display:flex;overflow:hidden;margin:3px 0}
+.tmini-seg{height:100%}
+.tbadges{display:flex;gap:3px;flex-wrap:wrap}
+.tbadge{font-size:9px;padding:1px 4px;border-radius:4px;color:#fff;font-weight:600;white-space:nowrap}
+.tbadge.l4{color:#333}
+.up-good{color:#2E7D32}.up-bad{color:#B71C1C}
+.dn-good{color:#2E7D32}.dn-bad{color:#B71C1C}.neutral-d{color:#FF6F00}
+
+/* CHART ROWS */
+#crow1,#crow2{display:grid;grid-template-columns:repeat(3,1fr);
+  gap:7px;padding:0 10px 6px}
+.ccard{background:var(--card);border-radius:12px;box-shadow:var(--shadow);
+  border-left:4px solid #90A4AE;padding:6px 8px;
+  display:flex;flex-direction:column;overflow:hidden;position:relative}
+.ctitle{font-size:11px;font-weight:700;color:#37474F;
+  margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.star{color:#FF6F00}
+.cwrap{flex:1;min-height:0;position:relative}
+.triage-card{border-left-color:var(--purple)}
+.tl-legend{display:flex;flex-direction:column;gap:1px;justify-content:center}
+.tl-row{display:flex;align-items:center;gap:4px;font-size:10px}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tl-tbl{width:100%;border-collapse:collapse;font-size:10px;margin-top:3px}
+.tl-tbl th,.tl-tbl td{padding:2px 4px;text-align:center;border-bottom:1px solid #EEE}
+.tl-tbl th{background:#F5F5F5;font-weight:700;font-size:9px}
+.dx-tbl{width:100%;border-collapse:collapse;font-size:10px;margin-top:2px}
+.dx-tbl th,.dx-tbl td{padding:2px 4px;border-bottom:1px solid #EEE}
+.dx-tbl th{background:#F5F5F5;font-weight:700;font-size:9px}
+.dual-wrap{display:flex;gap:4px;flex:1;min-height:0}
+.dual-col{flex:1;display:flex;flex-direction:column;min-height:0}
+.dual-lbl{font-size:9px;text-align:center;color:#607D8B;font-weight:700}
+.dual-cv{flex:1;position:relative;min-height:0}
+
+/* FOOTER */
+#ftr{background:#263238;color:#90A4AE;font-size:10px;
+  display:flex;align-items:center;justify-content:center;gap:10px;padding:0 16px}
+
+/* OVERLAY */
+#overlay{position:fixed;inset:0;background:rgba(26,35,126,.92);
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;color:#fff;z-index:9999;gap:14px}
+.spin{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ERROR */
+#errbanner{display:none;position:fixed;top:76px;left:50%;
+  transform:translateX(-50%);background:#B71C1C;color:#fff;
+  padding:9px 18px;border-radius:8px;z-index:1000;font-size:11px;
+  align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.3);max-width:90%}
+#errbanner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);
+  color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px}
+
+/* DEBUG PANEL */
+#dbgPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:8000;overflow:auto;padding:20px}
+#dbgBox{background:#1E272E;color:#A8FF78;font-family:monospace;font-size:11px;
+  border-radius:12px;padding:16px;max-width:960px;margin:0 auto;line-height:1.6}
+#dbgBox h2{color:#fff;font-size:14px;margin-bottom:8px}
+.dbg-sec{color:#64FFDA;font-weight:700;margin-top:10px;margin-bottom:4px}
+#dbgClose{float:right;background:transparent;border:1px solid #546E7A;
+  color:#90A4AE;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <div class="spin"></div>
+  <div style="font-size:14px;font-weight:600">Loading Emergency Data…</div>
+  <div style="font-size:11px;opacity:.7">Fetching from Google Sheets</div>
+</div>
+
+<div id="errbanner">
+  ⚠️ <span id="errMsg"></span>
+  <button onclick="fetchData()">🔄 Retry</button>
+  <button onclick="this.parentElement.style.display='none'">✕</button>
+</div>
+
+<div id="dbgPanel">
+  <div id="dbgBox">
+    <button id="dbgClose" onclick="document.getElementById('dbgPanel').style.display='none'">✕ Close</button>
+    <h2>🔬 Column Detection Report</h2>
+    <div id="dbgContent">Loading…</div>
+  </div>
+</div>
+
+<div id="app">
+
+  <div id="hdr">
+    <div class="hdr-l">
+      <span class="hdr-icon">🏥</span>
+      <div class="hdr-txt">
+        <h1>Emergency Department Dashboard</h1>
+        <p>Royal Angkor International Hospital</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="hdr-btn" style="font-size:10px;opacity:.8"
+        onclick="document.getElementById('dbgPanel').style.display='block'">🔬 Debug</button>
+      <button class="hdr-btn" onclick="fetchData()">🔄 Refresh Data</button>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab on"  onclick="switchMode(1)">🗓️ Single Period View</button>
+    <button class="tab off" onclick="switchMode(2)">📊 Year Comparison 2025 vs 2026</button>
+  </div>
+
+  <div id="fbar">
+    <div id="f1" class="fg">
+      <select id="fY"><option value="">All Years</option></select>
+      <select id="fM"><option value="">All Months</option></select>
+      <select id="fD"><option value="">All Days</option></select>
+      <div class="svc-grp">
+        <button class="svc on" id="s1b" onclick="setSvc('both')">🔘 Both</button>
+        <button class="svc"    id="s1e" onclick="setSvc('ed')">ED</button>
+        <button class="svc"    id="s1o" onclick="setSvc('opd')">OPD</button>
+      </div>
+      <button class="fapply" onclick="applyMode1()">Apply 🔍</button>
+      <button class="freset" onclick="resetMode1()">Reset ↺</button>
+      <span class="flbl" id="lbl1">📅 Showing: All Data</span>
+    </div>
+    <div id="f2" class="fg" style="display:none">
+      <span style="font-size:11px;color:#546E7A;font-weight:600">From:</span>
+      <select id="cS" style="width:62px">
+        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+        <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+        <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+        <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+      </select>
+      <span style="font-size:11px;color:#546E7A;font-weight:600">To:</span>
+      <select id="cE" style="width:62px">
+        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+        <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+        <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+        <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+      </select>
+      <div class="svc-grp">
+        <button class="svc on" id="s2b" onclick="setCmpSvc('both')">🔘 Both</button>
+        <button class="svc"    id="s2e" onclick="setCmpSvc('ed')">ED</button>
+        <button class="svc"    id="s2o" onclick="setCmpSvc('opd')">OPD</button>
+      </div>
+      <label class="chklbl"><input type="checkbox" id="ck25" checked> 2025</label>
+      <label class="chklbl"><input type="checkbox" id="ck26" checked> 2026</label>
+      <button class="fapply" onclick="applyMode2()">Apply 🔍</button>
+      <button class="freset" onclick="resetMode2()">Reset ↺</button>
+      <span class="flbl" id="lbl2">📅 Comparing: 2025 vs 2026</span>
+    </div>
+  </div>
+
+  <div id="krow">
+    <div class="kcard" style="border-left-color:var(--amber)">
+      <div class="klbl">Total Cases</div>
+      <div class="kval" id="k0" style="color:var(--amber)">—</div>
+      <div class="ksub" id="k0s"></div>
+    </div>
+    <div class="kcard" style="border-left-color:var(--crimson)">
+      <div class="klbl">Admitted</div>
+      <div class="kval" id="k1" style="color:var(--crimson)">—</div>
+      <div class="ksub" id="k1s"></div>
+    </div>
+    <div class="kcard" style="border-left-color:var(--blue)">
+      <div class="klbl">Emerg Dept</div>
+      <div class="kval" id="k2" style="color:var(--blue)">—</div>
+      <div class="ksub" id="k2s"></div>
+    </div>
+    <div class="kcard" style="border-left-color:var(--teal)">
+      <div class="klbl">Emerg OPD</div>
+      <div class="kval" id="k3" style="color:var(--teal)">—</div>
+      <div class="ksub" id="k3s"></div>
+    </div>
+    <div class="kcard" style="border-left-color:var(--dred)">
+      <div class="klbl">Trauma</div>
+      <div class="kval" id="k4" style="color:var(--dred)">—</div>
+      <div class="ksub" id="k4s"></div>
+    </div>
+    <div class="kcard" style="border-left-color:var(--dgrn)">
+      <div class="klbl">Non-Trauma</div>
+      <div class="kval" id="k5" style="color:var(--dgrn)">—</div>
+      <div class="ksub" id="k5s"></div>
+    </div>
+    <div class="kcard triage-card">
+      <div class="klbl">Triage Acuity</div>
+      <div class="ktriage-head" id="k6h">Critical (L1+L2): —</div>
+      <div class="tmini" id="k6bar"></div>
+      <div class="tbadges" id="k6badges"></div>
+    </div>
+  </div>
+
+  <div id="crow1">
+    <div class="ccard">
+      <div class="ctitle">📋 Case Type</div>
+      <div class="cwrap" id="w-casetype"><canvas id="ch-casetype"></canvas></div>
+    </div>
+    <div class="ccard">
+      <div class="ctitle">👤 Gender</div>
+      <div class="cwrap" id="w-gender"><canvas id="ch-gender"></canvas></div>
+    </div>
+    <div class="ccard">
+      <div class="ctitle">💳 Tariff / Nationality</div>
+      <div class="cwrap" id="w-tariff"><canvas id="ch-tariff"></canvas></div>
+    </div>
+  </div>
+
+  <div id="crow2">
+    <div class="ccard triage-card" id="cc-triage">
+      <div class="ctitle"><span class="star">★</span> Triage Level Distribution</div>
+      <div id="triageBody" style="display:flex;gap:6px;flex:1;min-height:0">
+        <div class="cwrap" style="max-width:44%"><canvas id="ch-triage"></canvas></div>
+        <div id="tl-legend" class="tl-legend" style="flex:1;min-width:0"></div>
+      </div>
+      <div id="tl-table"></div>
+    </div>
+    <div class="ccard">
+      <div class="ctitle">📊 Age Groups</div>
+      <div class="cwrap" id="w-age"><canvas id="ch-age"></canvas></div>
+    </div>
+    <div class="ccard">
+      <div class="ctitle">🏥 Top 5 Diagnoses</div>
+      <div style="flex:1;min-height:0;position:relative" id="w-disease"><canvas id="ch-disease"></canvas></div>
+      <div id="dx-table"></div>
+    </div>
+  </div>
+
+  <div id="ftr">
+    <span>🏥 Royal Angkor International Hospital</span>
+    <span>|</span><span>BDMS Member</span>
+    <span>|</span><span>Emergency Dashboard v3.1</span>
+    <span>|</span><span>⏱ <b id="lastUp">—</b></span>
+    <span>|</span><span id="rowCount" style="color:#607D8B;font-size:10px"></span>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════ */
+const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQonSg81K8uCwuNt61k1q20gyUBICi0XQg2_Jg32bjKshUwOVBEU9k_7vp-gvGBa5A0vmJpMjqCp5wt/pub?gid=0&single=true&output=csv';
+const MN=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const TL_NAMES=['Resuscitation','Emergency','Urgent','Semi-Urgent','Non-Urgent'];
+const TL_COLORS=['#D50000','#E53935','#FB8C00','#FDD835','#43A047'];
+const MEDALS=['🥇','🥈','🥉','4️⃣','5️⃣'];
+const DX_COLORS=['#FFD700','#C0C0C0','#CD7F32','#4E9AF1','#26C6DA'];
+
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let allData=[], CM={}, charts={}, mode=1, svc1='both', svc2='both';
+
+/* ══════════════════════════════════════════════════
+   FETCH
+══════════════════════════════════════════════════ */
+async function fetchData(){
+  loading(true); hideErr();
+  try{
+    const r=await fetch(CSV_URL+'&_='+Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const txt=await r.text();
+    if(!txt||txt.length<20) throw new Error('Empty response');
+    parseCSV(txt);
+    document.getElementById('lastUp').textContent=new Date().toLocaleTimeString();
+  }catch(e){
+    showErr('Cannot load CSV: '+e.message+'. Open 🔬Debug after data loads for column info.');
+    console.error(e);
+  }finally{ loading(false); }
+}
+
+/* ══════════════════════════════════════════════════
+   PARSE CSV
+══════════════════════════════════════════════════ */
+function parseCSV(txt){
+  const res=Papa.parse(txt,{header:true,skipEmptyLines:true,dynamicTyping:false});
+  if(!res.data.length){ showErr('CSV is empty or malformed.'); return; }
+  console.log('📄 Raw headers:',Object.keys(res.data[0]));
+  console.log('📄 Row 1:',res.data[0]);
+  detectColumns(res.data);
+  buildDebug(res.data);
+  allData=res.data;
+  document.getElementById('rowCount').textContent=allData.length+' rows';
+  populateDropdowns();
+  if(mode===1) applyMode1();
+  else applyMode2();
+}
+
+/* ══════════════════════════════════════════════════
+   DETECT COLUMNS
+══════════════════════════════════════════════════ */
+function detectColumns(rows){
+  const headers=Object.keys(rows[0]);
+  CM={triage:{},ageGroups:[],raw:headers};
+
+  // A=Day, B=Month, C=Year
+  CM.day=headers[0]; CM.month=headers[1]; CM.year=headers[2];
+
+  const s=h=>h.toLowerCase().replace(/[\s_\-\/]+/g,' ').trim();
+  const has=(h,...kws)=>kws.every(k=>s(h).includes(k));
+  const any=(h,...kws)=>kws.some(k=>s(h).includes(k));
+  const find=(...kws)=>headers.find(h=>kws.every(k=>s(h).includes(k)));
+  const findAny=(...kws)=>headers.find(h=>kws.some(k=>s(h).includes(k)));
+
+  // SERVICE: scan row values for "emergency"
+  for(const h of headers){
+    const vals=rows.slice(0,15).map(r=>(r[h]||'').toString().toLowerCase());
+    if(vals.some(v=>v.includes('emergency'))){CM.serviceCol=h;break;}
+  }
+  if(!CM.serviceCol) CM.serviceCol=findAny('service','department','ward','unit','clinic','opd');
+
+  // TOTAL
+  CM.total=find('total')||findAny('visit','visits','attend','cases','count','patient');
+
+  // ADMIT
+  CM.admit=findAny('admit','admitted','inpatient','hospitali','ip');
+
+  // NON-TRAUMA (before trauma to avoid mis-match)
+  CM.nontrauma=headers.find(h=>/non.?trauma/i.test(h))||find('non','trauma');
+
+  // TRAUMA
+  CM.trauma=headers.find(h=>/^trauma$/i.test(s(h)))||
+    headers.find(h=>/trauma/i.test(h)&&!/non/i.test(h));
+
+  // GENDER
+  CM.male=headers.find(h=>/^male$/i.test(s(h)))||
+    headers.find(h=>/\bmale\b/i.test(h)&&!/female/i.test(h));
+  CM.female=headers.find(h=>/female/i.test(h));
+  CM.gUnk=headers.find(h=>/unknown|unspecif|other.*sex|other.*gender/i.test(h));
+
+  // CASE TYPE
+  CM.newCase=headers.find(h=>/\bnew\b/i.test(h)&&!/non/i.test(h));
+  CM.oldCase=headers.find(h=>/\bold\b|\breturn\b/i.test(h));
+  CM.revisit=headers.find(h=>/revisit|follow.?up/i.test(h));
+
+  // TARIFF
+  CM.resident=headers.find(h=>/resident|khmer|local|national(?!ity)/i.test(h));
+  CM.expat=headers.find(h=>/expat|foreigner|foreign|non.?resident/i.test(h));
+  CM.tourist=headers.find(h=>/tourist|visitor/i.test(h));
+
+  // DISEASE / DX — name-based first
+  CM.disease=find('disease')||find('diagnosis')||findAny('icd','dx ','condition','diag','chief','complaint','present');
+  // Fallback: first column where values are mostly text (not numbers)
+  if(!CM.disease){
+    for(const h of headers.slice(3)){
+      if(h===CM.serviceCol||h===CM.total||h===CM.admit) continue;
+      const vals=rows.slice(0,25).map(r=>(r[h]||'').toString().trim()).filter(Boolean);
+      const texts=vals.filter(v=>isNaN(parseFloat(v))&&v.length>2);
+      if(texts.length>vals.length*0.6&&vals.length>5){CM.disease=h;break;}
+    }
+  }
+
+  // TRIAGE
+  for(const h of headers){
+    const hs=s(h);
+    let lv=null;
+    if(/resuscitat|level.?1|\bl1\b|esi.?1|triage.?1|\bred\b/.test(hs)) lv=1;
+    else if(/level.?2|\bl2\b|esi.?2|triage.?2|emergent/.test(hs)&&!/3|4|5/.test(hs)) lv=2;
+    else if(/level.?3|\bl3\b|esi.?3|triage.?3|^urgent$/.test(hs)) lv=3;
+    else if(/semi.?urgent|level.?4|\bl4\b|esi.?4|triage.?4|yellow/.test(hs)) lv=4;
+    else if(/non.?urgent|level.?5|\bl5\b|esi.?5|triage.?5|green|blue/.test(hs)) lv=5;
+    if(lv&&!CM.triage[lv]) CM.triage[lv]=h;
+  }
+
+  // AGE GROUPS
+  const ageRx=/age|\bunder\b|<\s*\d|≥|>=|\d+\s*[–\-]\s*\d+|\d+\s*\+\s*(yr|year)?/i;
+  CM.ageGroups=headers.filter(h=>ageRx.test(h)&&
+    h!==CM.month&&h!==CM.day&&h!==CM.year&&h!==CM.total);
+
+  console.log('✅ Column Map:',CM);
+}
+
+/* ══════════════════════════════════════════════════
+   DEBUG REPORT
+══════════════════════════════════════════════════ */
+function buildDebug(rows){
+  const mapped=new Set();
+  const push=v=>{if(v&&typeof v==='string') mapped.add(v);};
+  push(CM.serviceCol);push(CM.total);push(CM.admit);push(CM.trauma);push(CM.nontrauma);
+  push(CM.male);push(CM.female);push(CM.gUnk);push(CM.newCase);push(CM.oldCase);push(CM.revisit);
+  push(CM.resident);push(CM.expat);push(CM.tourist);push(CM.disease);
+  Object.values(CM.triage).forEach(push);
+  CM.ageGroups.forEach(push);
+
+  const fields=[
+    ['Day (col A)',CM.day],['Month (col B)',CM.month],['Year (col C)',CM.year],
+    ['Service / Department',CM.serviceCol],['Total / Visits',CM.total],['Admitted',CM.admit],
+    ['Trauma',CM.trauma],['Non-Trauma',CM.nontrauma],
+    ['Male',CM.male],['Female',CM.female],['Unknown Gender',CM.gUnk],
+    ['New Case',CM.newCase],['Old/Return Case',CM.oldCase],['Revisit',CM.revisit],
+    ['Resident/Local',CM.resident],['Expat',CM.expat],['Tourist',CM.tourist],
+    ['Disease / Diagnosis',CM.disease],
+    ...Object.entries(CM.triage).map(([l,c])=>['Triage Level '+l,c]),
+    ...CM.ageGroups.map((c,i)=>['Age Group '+(i+1),c])
+  ];
+
+  const sample=(col)=>{
+    if(!col) return '—';
+    return rows.slice(0,3).map(r=>(r[col]||'').toString().substring(0,18)).join(' | ');
+  };
+
+  let html=`
+    <div class="dbg-sec">📊 All Headers (${CM.raw.length}) — green = mapped, grey = unmapped</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+      ${CM.raw.map(h=>`<span style="background:#263238;border:1px solid ${mapped.has(h)?'#A8FF78':'#37474F'};
+        color:${mapped.has(h)?'#A8FF78':'#607D8B'};padding:1px 7px;border-radius:4px;font-size:10px">${h}</span>`).join('')}
+    </div>
+    <div class="dbg-sec">🗂️ Detected Mappings</div>
+    <table style="font-size:10px;border-collapse:collapse;width:100%">
+      <tr style="color:#64FFDA"><th style="text-align:left;padding:2px 8px">Field</th>
+          <th style="text-align:left;padding:2px 8px">Column</th>
+          <th style="text-align:left;padding:2px 8px">Sample (first 3 rows)</th></tr>
+      ${fields.map(([name,col])=>`
+        <tr><td style="padding:1px 8px;color:#90A4AE">${name}</td>
+          <td style="padding:1px 8px;color:${col?'#A8FF78':'#E57373'};font-weight:${col?'700':'400'}">${col||'❌ not detected'}</td>
+          <td style="padding:1px 8px;color:#607D8B;font-size:9px">${sample(col)}</td></tr>`).join('')}
+    </table>
+    <div class="dbg-sec">📝 Row 0 Raw JSON</div>
+    <pre style="font-size:9px;color:#90A4AE;max-height:120px;overflow:auto;background:#111;padding:8px;border-radius:6px">${
+      JSON.stringify(rows[0],null,2)}</pre>
+    <div style="margin-top:8px;color:#FFF176;font-size:10px">
+      💡 If columns are wrong, check your sheet's header row. 
+      The dashboard expects Day in col A, Month in col B, Year in col C.
+    </div>`;
+  document.getElementById('dbgContent').innerHTML=html;
+}
+
+/* ══════════════════════════════════════════════════
+   POPULATE DROPDOWNS
+══════════════════════════════════════════════════ */
+function populateDropdowns(){
+  const years=[...new Set(allData.map(r=>r[CM.year]).filter(Boolean))].sort();
+  const months=[...new Set(allData.map(r=>parseInt(r[CM.month])).filter(v=>!isNaN(v)&&v>0&&v<=12))].sort((a,b)=>a-b);
+  const days=[...new Set(allData.map(r=>parseInt(r[CM.day])).filter(v=>!isNaN(v)&&v>0))].sort((a,b)=>a-b);
+
+  const fY=document.getElementById('fY');
+  fY.innerHTML='<option value="">All Years</option>';
+  years.forEach(y=>fY.innerHTML+=`<option value="${y}">${y}</option>`);
+
+  const fM=document.getElementById('fM');
+  fM.innerHTML='<option value="">All Months</option>';
+  months.forEach(m=>fM.innerHTML+=`<option value="${m}">${MN[m]||m}</option>`);
+
+  const fD=document.getElementById('fD');
+  fD.innerHTML='<option value="">All Days</option>';
+  days.forEach(d=>fD.innerHTML+=`<option value="${d}">${d}</option>`);
+
+  if(months.length) document.getElementById('cE').value=months[months.length-1];
+}
+
+/* ══════════════════════════════════════════════════
+   FILTER DATA
+══════════════════════════════════════════════════ */
+function filterData(opts={}){
+  const{year,month,day,svc,yearVal,monthStart,monthEnd}=opts;
+  return allData.filter(r=>{
+    const ry=r[CM.year];
+    const rm=parseInt(r[CM.month]);
+    const rd=parseInt(r[CM.day]);
+    if(yearVal!==undefined&&ry!=yearVal) return false;
+    if(year&&ry!=year) return false;
+    if(month&&rm!==parseInt(month)) return false;
+    if(day&&rd!==parseInt(day)) return false;
+    if(monthStart!==undefined&&rm<monthStart) return false;
+    if(monthEnd!==undefined&&rm>monthEnd) return false;
+    if(CM.serviceCol&&svc&&svc!=='both'){
+      const sv=(r[CM.serviceCol]||'').toLowerCase();
+      if(svc==='ed'&&!sv.includes('emergency department')) return false;
+      if(svc==='opd'&&!(sv.includes('opd')||sv.includes('emergency opd'))) return false;
+    }
+    // Only keep Emergency rows if we have a service column
+    if(CM.serviceCol){
+      const sv=(r[CM.serviceCol]||'').toLowerCase();
+      if(!sv.includes('emerg')) return false;
+    }
+    return true;
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   AGGREGATE
+══════════════════════════════════════════════════ */
+function agg(rows){
+  const sum=col=>col?rows.reduce((a,r)=>a+(parseFloat(r[col])||0),0):0;
+
+  const rawTotal=sum(CM.total);
+  const total=rawTotal||rows.length;
+  const admit=sum(CM.admit);
+  const trauma=sum(CM.trauma);
+  const nontrauma=sum(CM.nontrauma);
+  const male=sum(CM.male);
+  const female=sum(CM.female);
+  const gUnk=sum(CM.gUnk);
+  const newCase=sum(CM.newCase);
+  const oldCase=sum(CM.oldCase);
+  const revisit=sum(CM.revisit);
+  const resident=sum(CM.resident);
+  const expat=sum(CM.expat);
+  const tourist=sum(CM.tourist);
+
+  let edTotal=0,opdTotal=0;
+  if(CM.serviceCol){
+    rows.forEach(r=>{
+      const sv=(r[CM.serviceCol]||'').toLowerCase();
+      const v=parseFloat(r[CM.total])||1;
+      if(sv.includes('emergency department')) edTotal+=v;
+      else if(sv.includes('opd')||sv.includes('emergency opd')) opdTotal+=v;
+      else edTotal+=v;
+    });
+  } else { edTotal=total; }
+
+  const triage={};
+  for(let l=1;l<=5;l++) triage[l]=sum(CM.triage[l]);
+
+  const ageData=CM.ageGroups.map(h=>({label:h,val:sum(h)}));
+
+  const diseases=[];
+  if(CM.disease){
+    const dm={};
+    rows.forEach(r=>{
+      const d=(r[CM.disease]||'').toString().trim();
+      if(d&&d!==''&&isNaN(parseFloat(d))&&d.toLowerCase()!=='total'){
+        dm[d]=(dm[d]||0)+(parseFloat(r[CM.total])||1);
+      }
+    });
+    Object.entries(dm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(e=>diseases.push(e));
+  }
+
+  return{total,admit,edTotal,opdTotal,trauma,nontrauma,
+    male,female,gUnk,newCase,oldCase,revisit,
+    resident,expat,tourist,triage,ageData,diseases};
+}
+
+/* ══════════════════════════════════════════════════
+   MODE 1
+══════════════════════════════════════════════════ */
+function applyMode1(){
+  const yr=document.getElementById('fY').value;
+  const mo=document.getElementById('fM').value;
+  const dy=document.getElementById('fD').value;
+  const rows=filterData({year:yr,month:mo?parseInt(mo):undefined,
+    day:dy?parseInt(dy):undefined,svc:svc1});
+  const d=agg(rows);
+  let lbl='📅 ';
+  if(mo) lbl+=MN[parseInt(mo)]+' '; if(yr) lbl+=yr;
+  if(!mo&&!yr) lbl+='All Data'; if(dy) lbl+=' Day '+dy;
+  lbl+=' — '+(svc1==='both'?'Both':svc1==='ed'?'Emerg Dept':'Emerg OPD');
+  lbl+=' ('+rows.length+' rows)';
+  document.getElementById('lbl1').textContent=lbl;
+  renderKPI1(d); renderCharts1(d);
+}
+function resetMode1(){
+  document.getElementById('fY').value='';
+  document.getElementById('fM').value='';
+  document.getElementById('fD').value='';
+  setSvc('both'); applyMode1();
+}
+
+/* ══════════════════════════════════════════════════
+   MODE 2
+══════════════════════════════════════════════════ */
+function applyMode2(){
+  const sm=parseInt(document.getElementById('cS').value);
+  const em=parseInt(document.getElementById('cE').value);
+  const u25=document.getElementById('ck25').checked;
+  const u26=document.getElementById('ck26').checked;
+  const r25=u25?filterData({yearVal:2025,monthStart:sm,monthEnd:em,svc:svc2}):[];
+  const r26=u26?filterData({yearVal:2026,monthStart:sm,monthEnd:em,svc:svc2}):[];
+  const a25=agg(r25),a26=agg(r26);
+  document.getElementById('lbl2').textContent=
+    `📅 ${MN[sm]}–${MN[em]}  2025(${r25.length}) vs 2026(${r26.length})`;
+  renderKPI2(a25,a26); renderCharts2(a25,a26);
+}
+function resetMode2(){
+  document.getElementById('cS').value=1;
+  document.getElementById('cE').value=12;
+  document.getElementById('ck25').checked=true;
+  document.getElementById('ck26').checked=true;
+  setCmpSvc('both'); applyMode2();
+}
+
+/* ══════════════════════════════════════════════════
+   KPI MODE 1
+══════════════════════════════════════════════════ */
+function renderKPI1(d){
+  const f=n=>Math.round(n||0).toLocaleString();
+  const p=(n,t)=>t?(n/t*100).toFixed(1)+'%':'—';
+  const T=d.total;
+  set('k0',f(T)); set('k0s','');
+  set('k1',f(d.admit));     set('k1s',p(d.admit,T));
+  set('k2',f(d.edTotal));   set('k2s',p(d.edTotal,T));
+  set('k3',f(d.opdTotal));  set('k3s',p(d.opdTotal,T));
+  set('k4',f(d.trauma));    set('k4s',p(d.trauma,T));
+  set('k5',f(d.nontrauma)); set('k5s',p(d.nontrauma,T));
+
+  const tT=Object.values(d.triage).reduce((a,b)=>a+b,0);
+  const crit=(d.triage[1]||0)+(d.triage[2]||0);
+  document.getElementById('k6h').textContent=
+    `Critical (L1+L2): ${f(crit)} (${p(crit,tT)})`;
+  buildMiniBar('k6bar',d.triage,tT);
+  buildBadges('k6badges',d.triage);
+}
+
+function buildMiniBar(id,triage,tT){
+  const el=document.getElementById(id);
+  el.style.height='6px'; el.style.flexDirection='row';
+  el.innerHTML=tT>0
+    ?[1,2,3,4,5].map(l=>`<div class="tmini-seg" style="width:${((triage[l]||0)/tT*100).toFixed(1)}%;background:${TL_COLORS[l-1]}"></div>`).join('')
+    :'<div style="width:100%;background:#EEE;border-radius:3px"></div>';
+}
+function buildBadges(id,triage){
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML=[1,2,3,4,5].map(l=>`<span class="tbadge${l===4?' l4':''}" style="background:${TL_COLORS[l-1]}">L${l}:${Math.round(triage[l]||0).toLocaleString()}</span>`).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   KPI MODE 2
+══════════════════════════════════════════════════ */
+function renderKPI2(a25,a26){
+  const f=n=>Math.round(n||0).toLocaleString();
+  const p=(n,t)=>t?(n/t*100).toFixed(1)+'%':'—';
+
+  function dHtml(v25,v26,sense){
+    if(!v25&&!v26) return '';
+    const diff=v26-v25;
+    const pct=v25?Math.abs(diff/v25*100).toFixed(1):'?';
+    const arr=diff>0?'▲':diff<0?'▼':'—';
+    let cls='neutral-d';
+    if(diff!==0){
+      cls=sense==='good_up'?(diff>0?'up-good':'dn-bad'):
+          sense==='bad_up' ?(diff>0?'up-bad':'dn-good'):'neutral-d';
+    }
+    return `<span class="${cls}">${arr} ${pct}%</span>`;
+  }
+
+  function setCmp(id,v25,v26,s25,s26,sense){
+    const el=document.getElementById(id);
+    el.style.fontSize='11px';
+    el.innerHTML=`<span style="color:#78909C">25:</span><b>${f(v25)}</b>&nbsp;<span style="color:#78909C">26:</span><b>${f(v26)}</b>`;
+    const sub=document.getElementById(id+'s');
+    if(sub) sub.innerHTML=dHtml(v25,v26,sense)+(s25?` <span style="font-size:9px;color:#90A4AE">${s25}→${s26}</span>`:'');
+  }
+
+  setCmp('k0',a25.total,a26.total,'','','good_up');
+  setCmp('k1',a25.admit,a26.admit,p(a25.admit,a25.total),p(a26.admit,a26.total),'neutral_d');
+  setCmp('k2',a25.edTotal,a26.edTotal,'','','good_up');
+  setCmp('k3',a25.opdTotal,a26.opdTotal,'','','good_up');
+  setCmp('k4',a25.trauma,a26.trauma,p(a25.trauma,a25.total),p(a26.trauma,a26.total),'bad_up');
+  setCmp('k5',a25.nontrauma,a26.nontrauma,'','','good_up');
+
+  const t25=Object.values(a25.triage).reduce((a,b)=>a+b,0);
+  const t26=Object.values(a26.triage).reduce((a,b)=>a+b,0);
+  const c25=(a25.triage[1]||0)+(a25.triage[2]||0);
+  const c26=(a26.triage[1]||0)+(a26.triage[2]||0);
+  document.getElementById('k6h').innerHTML=
+    `<span style="font-size:9px;color:#546E7A">Critical L1+L2</span><br>
+     <span style="font-size:10px"><b>25:</b>${f(c25)}(${p(c25,t25)}) <b>26:</b>${f(c26)}(${p(c26,t26)})</span>
+     ${dHtml(c25,c26,'bad_up')}`;
+
+  const bar=document.getElementById('k6bar');
+  bar.style.height='auto'; bar.style.flexDirection='column';
+  const seg=(tr,tt)=>[1,2,3,4,5].map(l=>`<div class="tmini-seg" style="width:${tt?((tr[l]||0)/tt*100).toFixed(1):0}%;background:${TL_COLORS[l-1]}"></div>`).join('');
+  bar.innerHTML=`<div style="font-size:9px;color:#90A4AE">2025</div><div class="tmini">${seg(a25.triage,t25)}</div>
+    <div style="font-size:9px;color:#90A4AE">2026</div><div class="tmini">${seg(a26.triage,t26)}</div>`;
+  document.getElementById('k6badges').innerHTML='';
+}
+
+/* ══════════════════════════════════════════════════
+   CHART HELPERS
+══════════════════════════════════════════════════ */
+const f=n=>Math.round(n||0).toLocaleString();
+const pct=(n,t)=>t?(n/t*100).toFixed(1)+'%':'0%';
+
+function killChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function mkCtx(id){killChart(id);return document.getElementById(id).getContext('2d');}
+
+function emptyCV(id,msg='No data'){
+  killChart(id);
+  const cv=document.getElementById(id); if(!cv) return;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#90A4AE'; ctx.font='11px Segoe UI';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('📭 '+msg,cv.width/2,cv.height/2);
+}
+
+function donut(id,labels,data,colors){
+  const total=data.reduce((a,b)=>a+b,0);
+  if(!total){emptyCV(id);return;}
+  charts[id]=new Chart(mkCtx(id),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:10},padding:5,boxWidth:9}},
+        tooltip:{callbacks:{label:c=>' '+c.label+': '+f(c.raw)+' ('+pct(c.raw,total)+')'}}
+      }}
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   CHARTS MODE 1
+══════════════════════════════════════════════════ */
+function renderCharts1(d){
+  clearDuals();
+  ['ch-casetype','ch-gender','ch-tariff'].forEach(id=>
+    (document.getElementById(id)||{}).style&&(document.getElementById(id).style.display=''));
+
+  const ctL=['New','Old/Return','Revisit'],ctD=[d.newCase,d.oldCase,d.revisit];
+  donut('ch-casetype',ctL.filter((_,i)=>ctD[i]>0),ctD.filter(v=>v>0),['#1565C0','#E53935','#43A047']);
+
+  const gL=['Male','Female','Unknown'],gD=[d.male,d.female,d.gUnk];
+  donut('ch-gender',gL.filter((_,i)=>gD[i]>0),gD.filter(v=>v>0),['#1976D2','#E91E63','#78909C']);
+
+  const tL=['Resident','Expat','Tourist'],tD=[d.resident,d.expat,d.tourist];
+  donut('ch-tariff',tL.filter((_,i)=>tD[i]>0),tD.filter(v=>v>0),['#00897B','#7B1FA2','#F57F17']);
+
+  renderTriage1(d);
+  renderAge1(d.ageData);
+  renderDisease1(d.diseases,d.total);
+}
+
+function renderTriage1(d){
+  const tT=Object.values(d.triage).reduce((a,b)=>a+b,0);
+  clearTriageDual();
+  document.getElementById('ch-triage').style.display='';
+  document.getElementById('triageBody').style.display='flex';
+  document.getElementById('tl-legend').style.display='';
+
+  if(!tT){
+    emptyCV('ch-triage','No triage data — see 🔬 Debug');
+    document.getElementById('tl-legend').innerHTML='<span style="color:#90A4AE;font-size:10px">Triage columns not detected</span>';
+    document.getElementById('tl-table').innerHTML='';
+    return;
+  }
+  killChart('ch-triage');
+  charts['ch-triage']=new Chart(document.getElementById('ch-triage').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:TL_NAMES,datasets:[{data:[1,2,3,4,5].map(l=>d.triage[l]||0),
+      backgroundColor:TL_COLORS,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>' '+c.label+': '+f(c.raw)+' ('+pct(c.raw,tT)+')'}}}}
+  });
+
+  document.getElementById('tl-legend').innerHTML=[1,2,3,4,5].map(l=>`
+    <div class="tl-row">
+      <div class="tl-dot" style="background:${TL_COLORS[l-1]}"></div>
+      <span style="flex:1">${TL_NAMES[l-1]}</span>
+      <b>${f(d.triage[l]||0)}</b>
+      <span style="color:#90A4AE;font-size:9px;margin-left:3px">${pct(d.triage[l]||0,tT)}</span>
+    </div>`).join('');
+
+  document.getElementById('tl-table').innerHTML=`
+    <table class="tl-tbl"><thead><tr><th>L</th><th>Name</th><th>Count</th><th>%</th></tr></thead>
+    <tbody>${[1,2,3,4,5].map(l=>`<tr>
+      <td><b style="color:${TL_COLORS[l-1]}">${l}</b></td>
+      <td style="text-align:left">${TL_NAMES[l-1]}</td>
+      <td>${f(d.triage[l]||0)}</td><td>${pct(d.triage[l]||0,tT)}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function renderAge1(ageData){
+  const cv=document.getElementById('ch-age');
+  cv.style.display=''; clearDual('age-d');
+  if(!ageData.length||ageData.every(a=>!a.val)){emptyCV('ch-age','No age data');return;}
+  killChart('ch-age');
+  charts['ch-age']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{labels:ageData.map(a=>a.label.length>12?a.label.substring(0,12)+'…':a.label),
+      datasets:[{label:'Cases',data:ageData.map(a=>a.val),
+        backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+f(c.raw)+' cases'}}},
+      scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{font:{size:9}}}}}
+  });
+}
+
+function renderDisease1(diseases,total){
+  const cv=document.getElementById('ch-disease');
+  cv.style.display=''; clearDual('disease-d');
+  const wrap=document.getElementById('dx-table');
+  if(!diseases.length){emptyCV('ch-disease','No diagnosis data');wrap.innerHTML='';return;}
+  killChart('ch-disease');
+  charts['ch-disease']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{labels:diseases.map((d,i)=>MEDALS[i]+' '+d[0].substring(0,22)),
+      datasets:[{data:diseases.map(d=>d[1]),backgroundColor:DX_COLORS,borderColor:DX_COLORS,borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+f(c.raw)+' ('+pct(c.raw,total)+')'}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+  });
+  const dxT=diseases.reduce((a,d)=>a+d[1],0);
+  wrap.innerHTML=`<table class="dx-tbl"><thead><tr><th>#</th><th style="text-align:left">Diagnosis</th><th>Count</th><th>%</th></tr></thead>
+    <tbody>${diseases.map((d,i)=>`<tr><td>${MEDALS[i]}</td>
+      <td style="text-align:left;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d[0]}</td>
+      <td>${f(d[1])}</td><td>${pct(d[1],dxT)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+/* ══════════════════════════════════════════════════
+   CHARTS MODE 2
+══════════════════════════════════════════════════ */
+function renderCharts2(a25,a26){
+  ['ch-casetype','ch-gender','ch-tariff'].forEach(id=>{
+    killChart(id); document.getElementById(id).style.display='none';
+  });
+
+  mkDual('casetype',['New','Old','Revisit'],
+    [a25.newCase,a25.oldCase,a25.revisit],[a26.newCase,a26.oldCase,a26.revisit],
+    ['#1565C0','#E53935','#43A047'],'w-casetype');
+  mkDual('gender',['Male','Female','Unk'],
+    [a25.male,a25.female,a25.gUnk],[a26.male,a26.female,a26.gUnk],
+    ['#1976D2','#E91E63','#78909C'],'w-gender');
+  mkDual('tariff',['Resident','Expat','Tourist'],
+    [a25.resident,a25.expat,a25.tourist],[a26.resident,a26.expat,a26.tourist],
+    ['#00897B','#7B1FA2','#F57F17'],'w-tariff');
+
+  renderTriage2(a25,a26);
+  renderAge2(a25.ageData,a26.ageData);
+  renderDisease2(a25.diseases,a26.diseases);
+}
+
+function mkDual(key,labels,d25,d26,colors,wrapId){
+  const wrap=document.getElementById(wrapId);
+  let dv=document.getElementById('dd-'+key);
+  if(!dv){dv=document.createElement('div');dv.id='dd-'+key;dv.className='dual-wrap';wrap.appendChild(dv);}
+  dv.style.display='flex';
+  ['2025','2026'].forEach((yr,i)=>{
+    const d=i===0?d25:d26;
+    const tot=d.reduce((a,b)=>a+b,0);
+    const cid='dd-cv-'+key+yr;
+    let col=document.getElementById('dd-c-'+key+yr);
+    if(!col){
+      col=document.createElement('div');col.id='dd-c-'+key+yr;col.className='dual-col';
+      col.innerHTML=`<div class="dual-lbl">${yr}</div><div class="dual-cv"><canvas id="${cid}"></canvas></div>`;
+      dv.appendChild(col);
+    }
+    killChart(cid);
+    charts[cid]=new Chart(document.getElementById(cid).getContext('2d'),{
+      type:'doughnut',
+      data:{labels,datasets:[{data:d,backgroundColor:colors,borderWidth:1,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+        plugins:{legend:{display:i===1,position:'bottom',labels:{font:{size:9},padding:3,boxWidth:7}},
+          tooltip:{callbacks:{label:c=>' '+c.label+': '+f(c.raw)+' ('+pct(c.raw,tot)+')'}}}}
+    });
+  });
+}
+
+function renderTriage2(a25,a26){
+  killChart('ch-triage');
+  document.getElementById('ch-triage').style.display='none';
+  document.getElementById('tl-legend').innerHTML='';
+
+  const t25=Object.values(a25.triage).reduce((a,b)=>a+b,0);
+  const t26=Object.values(a26.triage).reduce((a,b)=>a+b,0);
+  const tbody=document.getElementById('triageBody');
+
+  let dv=document.getElementById('dd-triage');
+  if(!dv){dv=document.createElement('div');dv.id='dd-triage';dv.className='dual-wrap';
+    tbody.insertBefore(dv,tbody.firstChild);}
+  dv.style.display='flex';
+
+  [[a25,t25,'2025'],[a26,t26,'2026']].forEach(([ag,tt,yr])=>{
+    const cid='dd-cv-triage'+yr;
+    let col=document.getElementById('dd-c-triage'+yr);
+    if(!col){
+      col=document.createElement('div');col.id='dd-c-triage'+yr;col.className='dual-col';
+      col.innerHTML=`<div class="dual-lbl">${yr}</div><div class="dual-cv"><canvas id="${cid}"></canvas></div>`;
+      dv.appendChild(col);
+    }
+    killChart(cid);
+    charts[cid]=new Chart(document.getElementById(cid).getContext('2d'),{
+      type:'doughnut',
+      data:{labels:TL_NAMES,datasets:[{data:[1,2,3,4,5].map(l=>ag.triage[l]||0),
+        backgroundColor:TL_COLORS,borderWidth:1,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:c=>' '+c.label+': '+f(c.raw)+' ('+pct(c.raw,tt)+')'}}}}
+    });
+  });
+
+  document.getElementById('tl-table').innerHTML=`
+    <table class="tl-tbl"><thead><tr><th>L</th><th>Name</th><th>2025</th><th>2026</th><th>Δ</th></tr></thead>
+    <tbody>${[1,2,3,4,5].map(l=>{
+      const v25=a25.triage[l]||0,v26=a26.triage[l]||0;
+      const d=v25?((v26-v25)/v25*100).toFixed(1)+'%':'—';
+      const arr=v26>v25?'▲':v26<v25?'▼':'—';
+      const dc=(l<=2)?(v26>v25?'color:#B71C1C':'color:#2E7D32'):(v26>v25?'color:#2E7D32':'color:#B71C1C');
+      return `<tr><td><b style="color:${TL_COLORS[l-1]}">${l}</b></td>
+        <td style="text-align:left">${TL_NAMES[l-1]}</td>
+        <td>${f(v25)}</td><td>${f(v26)}</td>
+        <td style="${dc}">${arr} ${d}</td></tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function renderAge2(ag25,ag26){
+  const cv=document.getElementById('ch-age'); cv.style.display=''; clearDual('age-d');
+  const labels=ag25.length?ag25.map(a=>a.label.substring(0,10)):ag26.map(a=>a.label.substring(0,10));
+  const d25=ag25.map(a=>a.val),d26=ag26.length?ag26.map(a=>a.val):ag25.map(()=>0);
+  killChart('ch-age');
+  charts['ch-age']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'2025',data:d25,backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1},
+      {label:'2026',data:d26,backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}}},
+      scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{font:{size:9}}}}}
+  });
+}
+
+function renderDisease2(dx25,dx26){
+  const cv=document.getElementById('ch-disease'); cv.style.display=''; clearDual('disease-d');
+  const wrap=document.getElementById('dx-table');
+  const cm={};
+  [...(dx25||[]),...(dx26||[])].forEach(([n,v])=>{cm[n]=(cm[n]||0)+v;});
+  const top5=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+  const m25=Object.fromEntries(dx25||[]),m26=Object.fromEntries(dx26||[]);
+  if(!top5.length){emptyCV('ch-disease','No diagnosis data');wrap.innerHTML='';return;}
+  killChart('ch-disease');
+  charts['ch-disease']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{labels:top5.map((n,i)=>MEDALS[i]+' '+n.substring(0,18)),
+      datasets:[
+        {label:'2025',data:top5.map(n=>m25[n]||0),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1},
+        {label:'2026',data:top5.map(n=>m26[n]||0),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+  });
+  wrap.innerHTML=`<table class="dx-tbl"><thead><tr><th>#</th><th style="text-align:left">Diagnosis</th><th>2025</th><th>2026</th></tr></thead>
+    <tbody>${top5.map((n,i)=>`<tr><td>${MEDALS[i]}</td><td style="text-align:left">${n.substring(0,20)}</td>
+      <td>${f(m25[n]||0)}</td><td>${f(m26[n]||0)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+/* ══════════════════════════════════════════════════
+   DUAL CLEANUP HELPERS
+══════════════════════════════════════════════════ */
+function clearDual(id){const e=document.getElementById(id);if(e)e.remove();}
+function clearDuals(){
+  ['dd-casetype','dd-gender','dd-tariff'].forEach(id=>{
+    const e=document.getElementById(id); if(e)e.remove();
+  });
+}
+function clearTriageDual(){
+  const e=document.getElementById('dd-triage'); if(e)e.remove();
+}
+
+/* ══════════════════════════════════════════════════
+   MODE SWITCH
+══════════════════════════════════════════════════ */
+function switchMode(m){
+  mode=m;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.className='tab '+(i===m-1?'on':'off'));
+  document.getElementById('f1').style.display=m===1?'flex':'none';
+  document.getElementById('f2').style.display=m===2?'flex':'none';
+  if(!allData.length) return;
+  if(m===1) applyMode1(); else applyMode2();
+}
+
+/* ══════════════════════════════════════════════════
+   SERVICE TOGGLES
+══════════════════════════════════════════════════ */
+function setSvc(s){
+  svc1=s;
+  ['s1b','s1e','s1o'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById(s==='both'?'s1b':s==='ed'?'s1e':'s1o').classList.add('on');
+}
+function setCmpSvc(s){
+  svc2=s;
+  ['s2b','s2e','s2o'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById(s==='both'?'s2b':s==='ed'?'s2e':'s2o').classList.add('on');
+}
+
+/* ══════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════ */
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function loading(v){document.getElementById('overlay').style.display=v?'flex':'none';}
+function showErr(m){
+  document.getElementById('errMsg').textContent=m;
+  document.getElementById('errbanner').style.display='flex';
+}
+function hideErr(){document.getElementById('errbanner').style.display='none';}
+
+/* ══════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded',fetchData);
+</script>
+</body>
+</html>
