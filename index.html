@@ -383,7 +383,7 @@ select:focus{border-color:var(--blue)}
   <div id="ftr">
     <span>🏥 Royal Angkor International Hospital</span>
     <span>|</span><span>BDMS Member</span>
-    <span>|</span><span>Emergency Dashboard v4.3</span>
+    <span>|</span><span>Emergency Dashboard v4.4</span>
     <span>|</span><span>⏱ <b id="lastUp">—</b></span>
     <span>|</span><span id="rowCount" style="color:#607D8B"></span>
   </div>
@@ -717,18 +717,20 @@ function agg(rows){
   const tariffMap={};
   rows.forEach(r=>{const v=((r[C.tariff]||'').toString().trim()||'Unknown');tariffMap[v]=(tariffMap[v]||0)+1;});
 
-  // ── REFERRAL STATUS (col BB)
+  // ── REFERRAL STATUS (col BB) — exclude blank/unknown
   const refStatusMap={};
   rows.forEach(r=>{
-    const v=((r[C.refStatus]||'').toString().trim()||'Unknown');
-    if(v&&v!=='-'&&v!=='') refStatusMap[v]=(refStatusMap[v]||0)+1;
+    const v=((r[C.refStatus]||'').toString().trim());
+    if(v&&v!=='-'&&v!==''&&!/^unknown$/i.test(v))
+      refStatusMap[v]=(refStatusMap[v]||0)+1;
   });
 
-  // ── REFERRAL TYPE (col BD)
+  // ── REFERRAL TYPE (col BD) — exclude blank/unknown
   const refTypeMap={};
   rows.forEach(r=>{
-    const v=((r[C.refType]||'').toString().trim()||'Unknown');
-    if(v&&v!=='-'&&v!=='') refTypeMap[v]=(refTypeMap[v]||0)+1;
+    const v=((r[C.refType]||'').toString().trim());
+    if(v&&v!=='-'&&v!==''&&!/^unknown$/i.test(v))
+      refTypeMap[v]=(refTypeMap[v]||0)+1;
   });
 
   // Derived referral KPIs
@@ -968,19 +970,28 @@ function emptyCV(id,msg='No data'){
   ctx.fillText('📭 '+msg,cv.width/2,cv.height/2);
 }
 
-// Donut from {label:count} map, top-N entries
-function donutFromMap(id,map,palette,topN=10){
-  const entries=Object.entries(map).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,topN);
+// Donut from {label:count} map
+// excludeUnknown=true → strips blank / "unknown" / "-" keys
+function donutFromMap(id,map,palette,topN=10,excludeUnknown=false){
+  const SKIP=/^(unknown|unknwon|-|n\/a|none|ไม่ระบุ)$/i;
+  let entries=Object.entries(map)
+    .filter(([k,v])=>v>0&&!(excludeUnknown&&SKIP.test(k.trim())))
+    .sort((a,b)=>b[1]-a[1]).slice(0,topN);
   if(!entries.length){emptyCV(id,'No data');return;}
   const total=entries.reduce((a,[,v])=>a+v,0);
   const ctx=mkCtx(id);if(!ctx)return;
   charts[id]=new Chart(ctx,{
     type:'doughnut',
     data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),
-      backgroundColor:palette.slice(0,entries.length),borderWidth:2,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      backgroundColor:palette.slice(0,entries.length),borderWidth:1.5,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
       plugins:{
-        legend:{position:'bottom',labels:{font:{size:8},padding:3,boxWidth:8}},
+        legend:{position:'bottom',labels:{font:{size:7.5},padding:2,boxWidth:7,
+          generateLabels(chart){
+            const orig=Chart.defaults.plugins.legend.labels.generateLabels(chart);
+            orig.forEach(l=>{if(l.text&&l.text.length>22)l.text=l.text.substring(0,21)+'…';});
+            return orig;
+          }}},
         tooltip:{callbacks:{label:c=>' '+c.label+': '+fmt(c.raw)+' ('+pct(c.raw,total)+')'}}
       }}
   });
@@ -1007,8 +1018,8 @@ function renderCharts1(d){
   donutFromMap('ch-gender',   d.genderMap,   GENDER_C);
   donutFromMap('ch-tariff',   d.tariffMap,   TARIFF_C);
   donutFromMap('ch-nation',   d.nationMap,   NATION_C,12);
-  donutFromMap('ch-refstatus',d.refStatusMap,REFS_C);
-  donutFromMap('ch-reftype',  d.refTypeMap,  REFT_C);
+  donutFromMap('ch-refstatus',d.refStatusMap,REFS_C, 10,true);  // exclude Unknown
+  donutFromMap('ch-reftype',  d.refTypeMap,  REFT_C, 10,true);  // exclude Unknown
 
   renderTriage1(d);
   renderAge1(d.ageBands);
@@ -1118,6 +1129,11 @@ function renderCharts2(a25,a26){
   const REFT_C  =['#00796B','#26A69A','#80CBC4','#004D40','#00BFA5'];
 
   const mKeys=(m1,m2)=>[...new Set([...Object.keys(m1),...Object.keys(m2)])].sort();
+  const mKeysNoUnk=(m1,m2)=>{
+    const SKIP=/^(unknown|unknwon|-|n\/a|none|ไม่ระบุ)$/i;
+    return [...new Set([...Object.keys(m1),...Object.keys(m2)])]
+      .filter(k=>!SKIP.test(k.trim())).sort();
+  };
   mkDualMap('casetype', mKeys(a25.caseMap,a26.caseMap),
     a25.caseMap,a26.caseMap,CASE_C,'w-casetype');
   mkDualMap('gender',   mKeys(a25.genderMap,a26.genderMap),
@@ -1126,9 +1142,9 @@ function renderCharts2(a25,a26){
     a25.tariffMap,a26.tariffMap,TARIFF_C,'w-tariff');
   mkDualMap('nation',   mKeys(a25.nationMap,a26.nationMap),
     a25.nationMap,a26.nationMap,NATION_C,'w-nation');
-  mkDualMap('refstatus',mKeys(a25.refStatusMap,a26.refStatusMap),
+  mkDualMap('refstatus',mKeysNoUnk(a25.refStatusMap,a26.refStatusMap),
     a25.refStatusMap,a26.refStatusMap,REFS_C,'w-refstatus');
-  mkDualMap('reftype',  mKeys(a25.refTypeMap,a26.refTypeMap),
+  mkDualMap('reftype',  mKeysNoUnk(a25.refTypeMap,a26.refTypeMap),
     a25.refTypeMap,a26.refTypeMap,REFT_C,'w-reftype');
 
   renderTriage2(a25,a26);
@@ -1158,11 +1174,16 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
       type:'doughnut',
       data:{labels:keys,datasets:[{data:d,backgroundColor:colors.slice(0,keys.length),
         borderWidth:1,borderColor:'#fff'}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'50%',
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
         plugins:{
           legend:{display:i===1,position:'bottom',
             labels:{font:{size:7},padding:2,boxWidth:6,
-              filter:(item)=>item.text.length<18}},
+              generateLabels(chart){
+                const orig=Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                orig.forEach(l=>{if(l.text&&l.text.length>20)l.text=l.text.substring(0,19)+'…';});
+                return orig;
+              }
+            }},
           tooltip:{callbacks:{label:c=>' '+c.label+': '+fmt(c.raw)+' ('+pct(c.raw,tot)+')'}}
         }}
     });
