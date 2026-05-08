@@ -12,21 +12,27 @@
   --bg:#F0F4FF;--card:#fff;
   --hdr1:#1a237e;--hdr2:#283593;
   --tab-on:#1565C0;--tab-off:#ECEFF1;--tab-off-txt:#546E7A;
-  --shadow:0 2px 10px rgba(0,0,0,.07);
+  --shadow:0 2px 12px rgba(0,0,0,.09);
   --amber:#FF6F00;--crimson:#C62828;--blue:#1565C0;
   --teal:#00838F;--dred:#B71C1C;--dgrn:#2E7D32;--purple:#6A1B9A;
+  --brown:#6D4C41;--indigo:#283593;
   --tl1:#D50000;--tl2:#E53935;--tl3:#FB8C00;--tl4:#FDD835;--tl5:#43A047;
 }
 html,body{height:100%;width:100%;overflow:hidden;
   font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;
   font-size:12px;background:var(--bg);color:#263238}
 
-/* ── LAYOUT ── */
-#app{display:grid;
-  grid-template-rows:6vh 5vh 6vh 14vh 31vh 30vh 4vh;
-  height:100vh;width:100%}
+/* ══ LAYOUT  ══════════════════════════════════════════
+   Header 5vh | Tabs 4vh | Filter 6vh | KPI 13vh
+   Row1 charts 33vh | Row2 charts 33vh | Footer 3vh  (not scroll)
+   Row2 has 5 charts (triage wider + 4 others)         */
+#app{
+  display:grid;
+  grid-template-rows:5vh 4.5vh 6vh 13vh 34vh 31.5vh 3vh;
+  height:100vh;width:100%
+}
 
-/* HEADER */
+/* ── HEADER ── */
 #hdr{background:linear-gradient(135deg,var(--hdr1),var(--hdr2));
   display:flex;align-items:center;justify-content:space-between;
   padding:0 14px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
@@ -35,11 +41,10 @@ html,body{height:100%;width:100%;overflow:hidden;
 .hdr-txt h1{font-size:15px;font-weight:700}
 .hdr-txt p{font-size:10px;opacity:.75}
 .hdr-btn{background:transparent;border:1.5px solid rgba(255,255,255,.55);
-  color:#fff;padding:4px 10px;border-radius:8px;cursor:pointer;
-  font-size:11px;transition:background .2s}
+  color:#fff;padding:4px 10px;border-radius:8px;cursor:pointer;font-size:11px;transition:background .2s}
 .hdr-btn:hover{background:rgba(255,255,255,.15)}
 
-/* TABS */
+/* ── TABS ── */
 #tabs{background:#E8EDF5;display:flex;align-items:center;
   padding:0 14px;gap:8px;border-bottom:2px solid #C5CAE9}
 .tab{padding:4px 14px;border:none;border-radius:8px 8px 0 0;
@@ -48,61 +53,81 @@ html,body{height:100%;width:100%;overflow:hidden;
 .tab.off{background:var(--tab-off);color:var(--tab-off-txt)}
 .tab.off:hover{background:#CFD8DC}
 
-/* FILTER BAR */
+/* ── FILTER BAR ── */
 #fbar{background:#fff;display:flex;align-items:center;
   padding:0 10px;gap:5px;border-bottom:1px solid #E0E0E0;overflow:hidden}
-.fg{display:flex;align-items:center;gap:5px;width:100%}
-select{height:26px;border:1px solid #CFD8DC;border-radius:6px;
+.fg{display:flex;align-items:center;gap:5px;width:100%;flex-wrap:nowrap}
+select{height:27px;border:1px solid #CFD8DC;border-radius:6px;
   font-size:11px;padding:0 6px;background:#FAFAFA;color:#263238;cursor:pointer;outline:none}
 select:focus{border-color:var(--blue)}
 .svc-grp{display:flex;gap:3px}
-.svc{height:25px;padding:0 8px;border:1px solid #CFD8DC;border-radius:6px;
+.svc{height:26px;padding:0 9px;border:1px solid #CFD8DC;border-radius:6px;
   font-size:11px;cursor:pointer;background:#ECEFF1;color:#546E7A;transition:all .15s;white-space:nowrap}
 .svc.on{background:var(--blue);color:#fff;border-color:var(--blue)}
-.fapply{height:26px;padding:0 10px;background:var(--blue);color:#fff;
+.fapply{height:27px;padding:0 11px;background:var(--blue);color:#fff;
   border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer}
 .fapply:hover{background:#0D47A1}
-.freset{height:26px;padding:0 8px;background:#ECEFF1;color:#546E7A;
+.freset{height:27px;padding:0 9px;background:#ECEFF1;color:#546E7A;
   border:1px solid #CFD8DC;border-radius:6px;font-size:11px;cursor:pointer}
 .flbl{font-size:10px;color:#546E7A;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;max-width:310px;margin-left:4px}
-.chklbl{display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer}
-.chklbl input{width:12px;height:12px}
+  text-overflow:ellipsis;max-width:340px;margin-left:5px}
+.chklbl{display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;white-space:nowrap}
+.chklbl input{width:13px;height:13px}
 
-/* KPI ROW — 8 cards */
-#krow{display:grid;grid-template-columns:repeat(8,1fr);
-  gap:6px;padding:5px 10px;align-items:stretch}
+/* ══ KPI ROW  (10 cards) ══════════════════════════ */
+#krow{
+  display:grid;
+  grid-template-columns:repeat(10,1fr);
+  gap:5px;padding:4px 10px;align-items:stretch
+}
 .kcard{background:var(--card);border-radius:10px;box-shadow:var(--shadow);
-  border-left:4px solid #ccc;padding:5px 7px;
+  border-left:4px solid #ccc;padding:5px 8px;
   display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
-.klbl{font-size:9px;color:#607D8B;font-weight:600;
-  text-transform:uppercase;letter-spacing:.5px;line-height:1.2}
-.kval{font-size:20px;font-weight:700;line-height:1.1}
-.ksub{font-size:10px;color:#90A4AE;min-height:12px}
-.ktriage-head{font-size:10px;font-weight:700;color:var(--dred);line-height:1.3}
+.klbl{font-size:9px;color:#607D8B;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;line-height:1.2;margin-bottom:1px}
+/* ★ Bigger KPI numbers ★ */
+.kval{font-size:26px;font-weight:800;line-height:1;letter-spacing:-0.5px}
+.ksub{font-size:10px;color:#90A4AE;min-height:13px;margin-top:1px}
+/* compare kpi values */
+.kval-cmp{font-size:13px;font-weight:700;line-height:1.3}
+.kdelta{font-size:11px;font-weight:700;min-height:13px}
+
+/* Triage KPI card */
+.ktriage-head{font-size:11px;font-weight:700;color:var(--dred);line-height:1.3}
 .tmini{height:5px;border-radius:3px;display:flex;overflow:hidden;margin:2px 0}
 .tmini-seg{height:100%}
 .tbadges{display:flex;gap:2px;flex-wrap:wrap}
 .tbadge{font-size:8px;padding:1px 3px;border-radius:4px;color:#fff;font-weight:600;white-space:nowrap}
 .tbadge.l4{color:#333}
+
+/* Delta colors */
 .up-good{color:#2E7D32}.up-bad{color:#B71C1C}
 .dn-good{color:#2E7D32}.dn-bad{color:#B71C1C}.neutral-d{color:#FF6F00}
 
-/* CHART ROWS */
-#crow1{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px 5px}
-#crow2{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 10px 5px}
+/* ══ CHART ROWS ══════════════════════════════════
+   Row 1: 6 cols (Case Type | Gender | Tariff | Nationality | Referral Status | Referral Type)
+   Row 2: 3 cols — Triage(wider) | Age | Disease          */
+#crow1{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:5px;padding:0 10px 4px
+}
+#crow2{
+  display:grid;
+  grid-template-columns:1.15fr 1fr 1fr;
+  gap:5px;padding:0 10px 4px
+}
 .ccard{background:var(--card);border-radius:10px;box-shadow:var(--shadow);
   border-left:4px solid #90A4AE;padding:5px 7px;
   display:flex;flex-direction:column;overflow:hidden;position:relative}
 .ctitle{font-size:10px;font-weight:700;color:#37474F;
-  margin-bottom:2px;display:flex;align-items:center;gap:3px}
+  margin-bottom:2px;display:flex;align-items:center;gap:3px;white-space:nowrap}
 .star{color:#FF6F00}
 .cwrap{flex:1;min-height:0;position:relative}
 
 /* Triage card */
 .triage-card{border-left-color:var(--purple)}
-.tl-legend{display:flex;flex-direction:column;gap:1px;justify-content:center}
-.tl-row{display:flex;align-items:center;gap:3px;font-size:9px}
+.tl-row{display:flex;align-items:center;gap:3px;font-size:9px;line-height:1.4}
 .tl-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .tl-tbl{width:100%;border-collapse:collapse;font-size:9px;margin-top:2px}
 .tl-tbl th,.tl-tbl td{padding:2px 3px;text-align:center;border-bottom:1px solid #EEE}
@@ -110,20 +135,20 @@ select:focus{border-color:var(--blue)}
 
 /* Disease table */
 .dx-tbl{width:100%;border-collapse:collapse;font-size:9px;margin-top:2px}
-.dx-tbl th,.dx-tbl td{padding:1px 3px;border-bottom:1px solid #EEE}
+.dx-tbl th,.dx-tbl td{padding:1px 4px;border-bottom:1px solid #EEE}
 .dx-tbl th{background:#F5F5F5;font-weight:700;font-size:8px}
 
-/* Dual donut */
+/* Dual donut layout */
 .dual-wrap{display:flex;gap:4px;flex:1;min-height:0}
 .dual-col{flex:1;display:flex;flex-direction:column;min-height:0}
 .dual-lbl{font-size:9px;text-align:center;color:#607D8B;font-weight:700}
 .dual-cv{flex:1;position:relative;min-height:0}
 
-/* FOOTER */
+/* ── FOOTER ── */
 #ftr{background:#263238;color:#90A4AE;font-size:9px;
   display:flex;align-items:center;justify-content:center;gap:10px;padding:0 14px}
 
-/* OVERLAY */
+/* ── OVERLAY ── */
 #overlay{position:fixed;inset:0;background:rgba(26,35,126,.92);
   display:flex;flex-direction:column;align-items:center;
   justify-content:center;color:#fff;z-index:9999;gap:14px}
@@ -131,19 +156,19 @@ select:focus{border-color:var(--blue)}
   border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ERROR */
-#errbanner{display:none;position:fixed;top:74px;left:50%;
+/* ── ERROR BANNER ── */
+#errbanner{display:none;position:fixed;top:72px;left:50%;
   transform:translateX(-50%);background:#B71C1C;color:#fff;
   padding:8px 16px;border-radius:8px;z-index:1000;font-size:11px;
   align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.3);max-width:92%}
 #errbanner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);
   color:#fff;padding:2px 9px;border-radius:5px;cursor:pointer;font-size:11px}
 
-/* DEBUG PANEL */
+/* ── DEBUG PANEL ── */
 #dbgPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
   z-index:8000;overflow:auto;padding:20px}
 #dbgBox{background:#1E272E;color:#A8FF78;font-family:monospace;font-size:11px;
-  border-radius:10px;padding:14px;max-width:980px;margin:0 auto;line-height:1.6}
+  border-radius:10px;padding:14px;max-width:1000px;margin:0 auto;line-height:1.6}
 #dbgBox h2{color:#fff;font-size:13px;margin-bottom:8px}
 .dbg-sec{color:#64FFDA;font-weight:700;margin-top:8px;margin-bottom:3px}
 #dbgClose{float:right;background:transparent;border:1px solid #546E7A;
@@ -152,18 +177,21 @@ select:focus{border-color:var(--blue)}
 </head>
 <body>
 
+<!-- LOADING -->
 <div id="overlay">
   <div class="spin"></div>
   <div style="font-size:14px;font-weight:600">Loading Emergency Data…</div>
   <div style="font-size:11px;opacity:.7">Connecting to Google Sheets</div>
 </div>
 
+<!-- ERROR -->
 <div id="errbanner">
   ⚠️ <span id="errMsg"></span>
   <button onclick="fetchData()">🔄 Retry</button>
   <button onclick="this.parentElement.style.display='none'">✕</button>
 </div>
 
+<!-- DEBUG -->
 <div id="dbgPanel">
   <div id="dbgBox">
     <button id="dbgClose" onclick="document.getElementById('dbgPanel').style.display='none'">✕ Close</button>
@@ -200,9 +228,9 @@ select:focus{border-color:var(--blue)}
   <div id="fbar">
     <!-- MODE 1 -->
     <div id="f1" class="fg">
-      <select id="fY"><option value="">All Years</option></select>
-      <select id="fM"><option value="">All Months</option></select>
-      <select id="fD"><option value="">All Days</option></select>
+      <select id="fY" style="width:80px"><option value="">All Years</option></select>
+      <select id="fM" style="width:96px"><option value="">All Months</option></select>
+      <select id="fD" style="width:110px"><option value="">All Days</option></select>
       <div class="svc-grp">
         <button class="svc on" id="s1b" onclick="setSvc('both')">🔘 Both</button>
         <button class="svc"    id="s1e" onclick="setSvc('er')">ER</button>
@@ -214,15 +242,15 @@ select:focus{border-color:var(--blue)}
     </div>
     <!-- MODE 2 -->
     <div id="f2" class="fg" style="display:none">
-      <span style="font-size:10px;color:#546E7A;font-weight:600">From:</span>
-      <select id="cS" style="width:58px">
+      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">From Month:</span>
+      <select id="cS" style="width:78px">
         <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
         <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
         <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
         <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
       </select>
-      <span style="font-size:10px;color:#546E7A;font-weight:600">To:</span>
-      <select id="cE" style="width:58px">
+      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">To Month:</span>
+      <select id="cE" style="width:78px">
         <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
         <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
         <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
@@ -241,12 +269,12 @@ select:focus{border-color:var(--blue)}
     </div>
   </div>
 
-  <!-- KPI ROW — 8 cards -->
+  <!-- KPI ROW — 10 cards -->
   <div id="krow">
     <div class="kcard" style="border-left-color:var(--amber)">
       <div class="klbl">Total Visit</div>
       <div class="kval" id="k0" style="color:var(--amber)">—</div>
-      <div class="ksub" id="k0s"></div>
+      <div class="ksub" id="k0s">visits</div>
     </div>
     <div class="kcard" style="border-left-color:var(--crimson)">
       <div class="klbl">Admitted (IPD)</div>
@@ -273,11 +301,24 @@ select:focus{border-color:var(--blue)}
       <div class="kval" id="k5" style="color:var(--dgrn)">—</div>
       <div class="ksub" id="k5s"></div>
     </div>
-    <div class="kcard" style="border-left-color:#6D4C41">
+    <div class="kcard" style="border-left-color:var(--brown)">
       <div class="klbl">New Cases</div>
-      <div class="kval" id="k6" style="color:#6D4C41">—</div>
+      <div class="kval" id="k6" style="color:var(--brown)">—</div>
       <div class="ksub" id="k6s"></div>
     </div>
+    <!-- Referral Status KPI -->
+    <div class="kcard" style="border-left-color:#0288D1">
+      <div class="klbl">Referred Out</div>
+      <div class="kval" id="k8" style="color:#0288D1">—</div>
+      <div class="ksub" id="k8s"></div>
+    </div>
+    <!-- Referral Type KPI -->
+    <div class="kcard" style="border-left-color:#00796B">
+      <div class="klbl">Referred In</div>
+      <div class="kval" id="k9" style="color:#00796B">—</div>
+      <div class="ksub" id="k9s"></div>
+    </div>
+    <!-- Triage KPI -->
     <div class="kcard triage-card">
       <div class="klbl">Triage Acuity</div>
       <div class="ktriage-head" id="k7h">Critical (L1+L2): —</div>
@@ -286,10 +327,10 @@ select:focus{border-color:var(--blue)}
     </div>
   </div>
 
-  <!-- CHARTS ROW 1: Case Type | Gender | Tariff | Nationality -->
+  <!-- CHARTS ROW 1: 6 charts -->
   <div id="crow1">
     <div class="ccard" style="border-left-color:#1565C0">
-      <div class="ctitle">📋 Case Type (New / Old)</div>
+      <div class="ctitle">📋 Case Type</div>
       <div class="cwrap" id="w-casetype"><canvas id="ch-casetype"></canvas></div>
     </div>
     <div class="ccard" style="border-left-color:#E91E63">
@@ -304,28 +345,36 @@ select:focus{border-color:var(--blue)}
       <div class="ctitle">🌏 Nationality</div>
       <div class="cwrap" id="w-nation"><canvas id="ch-nation"></canvas></div>
     </div>
+    <div class="ccard" style="border-left-color:#0288D1">
+      <div class="ctitle">🚑 Referral Status</div>
+      <div class="cwrap" id="w-refstatus"><canvas id="ch-refstatus"></canvas></div>
+    </div>
+    <div class="ccard" style="border-left-color:#00796B">
+      <div class="ctitle">🔄 Referral Type</div>
+      <div class="cwrap" id="w-reftype"><canvas id="ch-reftype"></canvas></div>
+    </div>
   </div>
 
-  <!-- CHARTS ROW 2: Triage | Age Groups | Top 5 Diagnoses -->
+  <!-- CHARTS ROW 2: Triage(wider) | Age | Disease -->
   <div id="crow2">
+    <!-- TRIAGE — bar + legend + table -->
     <div class="ccard triage-card" id="cc-triage">
       <div class="ctitle"><span class="star">★</span> Triage Level Distribution</div>
-      <!-- Single mode: donut + legend; Compare mode: dual donuts -->
       <div id="triageBody" style="display:flex;gap:5px;flex:1;min-height:0">
-        <div class="cwrap" style="max-width:44%"><canvas id="ch-triage"></canvas></div>
-        <div id="tl-legend" class="tl-legend" style="flex:1;min-width:0"></div>
+        <div style="flex:1.1;min-height:0;position:relative"><canvas id="ch-triage"></canvas></div>
+        <div id="tl-legend" style="display:flex;flex-direction:column;gap:1px;justify-content:center;min-width:110px"></div>
       </div>
       <div id="tl-table"></div>
     </div>
+    <!-- AGE GROUPS -->
     <div class="ccard" style="border-left-color:#1565C0">
       <div class="ctitle">📊 Age Groups</div>
-      <div class="cwrap" id="w-age"><canvas id="ch-age"></canvas></div>
+      <div class="cwrap"><canvas id="ch-age"></canvas></div>
     </div>
+    <!-- TOP 5 DIAGNOSES -->
     <div class="ccard" style="border-left-color:#FF6F00">
       <div class="ctitle">🏥 Top 5 Diagnoses</div>
-      <div style="flex:1;min-height:0;position:relative" id="w-disease">
-        <canvas id="ch-disease"></canvas>
-      </div>
+      <div style="flex:1;min-height:0;position:relative"><canvas id="ch-disease"></canvas></div>
       <div id="dx-table"></div>
     </div>
   </div>
@@ -334,47 +383,36 @@ select:focus{border-color:var(--blue)}
   <div id="ftr">
     <span>🏥 Royal Angkor International Hospital</span>
     <span>|</span><span>BDMS Member</span>
-    <span>|</span><span>Emergency Dashboard v4.1</span>
+    <span>|</span><span>Emergency Dashboard v4.2</span>
     <span>|</span><span>⏱ <b id="lastUp">—</b></span>
     <span>|</span><span id="rowCount" style="color:#607D8B"></span>
   </div>
-</div>
+
+</div><!-- #app -->
 
 <script>
-/* ════════════════════════════════════════════════════════════════
-   COLUMN INDEX MAP  (0-based, A=0, B=1, … Z=25, AA=26, …)
-   A=0   Year
-   B=1   Month
-   C=2   Day          ← dropdown shows real dates from this col
-   H=7   Gender
-   I=8   Nationality
-   R=17  Case Type (New / Old)
-   Y=24  Tariff
-   AA=26 EN Type      ← IPD = Admitted
-   AJ=35 Disease name ← Top 5 diagnoses
-   AW=48 Triage Level ← AW = A(0)+W(22)=26+22=48? No: AA=26,AB=27,...AW=26+22=48
-         Actually: AA=26, AB=27, AC=28, AD=29, AE=30, AF=31, AG=32,
-                   AH=33, AI=34, AJ=35, AK=36, AL=37, AM=38, AN=39,
-                   AO=40, AP=41, AQ=42, AR=43, AS=44, AT=45, AU=46,
-                   AV=47, AW=48
-   AX=49 Trauma / Non-Trauma value
-════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   COLUMN INDEX MAP  (0-based)
+   A=0  B=1  C=2 … Z=25  AA=26 AB=27 … AJ=35 … AW=48 AX=49
+   BB = 26+26+1 = 53   (AA=26, AB=27,...AZ=51, BA=52, BB=53)
+   BD = 55               (BA=52,BB=53,BC=54,BD=55)
+═══════════════════════════════════════════════════════════════ */
 const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQonSg81K8uCwuNt61k1q20gyUBICi0XQg2_Jg32bjKshUwOVBEU9k_7vp-gvGBa5A0vmJpMjqCp5wt/pub?gid=0&single=true&output=csv';
 
-// Fixed column indices (0-based)
 const IDX={
   YEAR:0, MONTH:1, DAY:2,
-  GENDER:7,
-  NATIONALITY:8,
-  CASE_TYPE:17,   // R  — New / Old
-  TARIFF:24,      // Y
-  EN_TYPE:26,     // AA — IPD = Admitted
-  DISEASE:35,     // AJ — Disease name for Top 5
-  TRIAGE:48,      // AW — Triage level
-  TRAUMA_COL:49   // AX — Trauma / Non-Trauma
+  GENDER:7,           // H
+  NATIONALITY:8,      // I
+  CASE_TYPE:17,       // R
+  TARIFF:24,          // Y
+  EN_TYPE:26,         // AA  → IPD = admitted
+  DISEASE:35,         // AJ  → disease name
+  TRIAGE:48,          // AW  → triage level
+  TRAUMA_COL:49,      // AX  → "Trauma" / "Non-Trauma"
+  REF_STATUS:53,      // BB  → Referral status
+  REF_TYPE:55         // BD  → Referral type
 };
 
-// For age, service: auto-detect by header keyword (no fixed index)
 const MN=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const TL_NAMES=['Resuscitation','Emergency','Urgent','Semi-Urgent','Non-Urgent'];
 const TL_COLORS=['#D50000','#E53935','#FB8C00','#FDD835','#43A047'];
@@ -382,21 +420,23 @@ const MEDALS=['🥇','🥈','🥉','4️⃣','5️⃣'];
 const DX_COLORS=['#FFD700','#C0C0C0','#CD7F32','#4E9AF1','#26C6DA'];
 
 const AGE_BANDS=[
-  {label:'< 4 yrs',   min:0,  max:3},
-  {label:'4–14 yrs',  min:4,  max:14},
-  {label:'15–24 yrs', min:15, max:24},
-  {label:'25–34 yrs', min:25, max:34},
-  {label:'35–44 yrs', min:35, max:44},
-  {label:'45–54 yrs', min:45, max:54},
-  {label:'55–64 yrs', min:55, max:64},
-  {label:'65–74 yrs', min:65, max:74},
-  {label:'≥ 75 yrs',  min:75, max:999}
+  {label:'< 4',   min:0,  max:3},
+  {label:'4–14',  min:4,  max:14},
+  {label:'15–24', min:15, max:24},
+  {label:'25–34', min:25, max:34},
+  {label:'35–44', min:35, max:44},
+  {label:'45–54', min:45, max:54},
+  {label:'55–64', min:55, max:64},
+  {label:'65–74', min:65, max:74},
+  {label:'≥75',   min:75, max:999}
 ];
 
-/* ─── STATE ─────────────────────────────────────── */
+/* ─── STATE ─── */
 let allData=[], HDR=[], C={}, charts={}, mode=1, svc1='both', svc2='both';
 
-/* ─── FETCH ──────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   FETCH
+═══════════════════════════════════════════════════════════════ */
 async function fetchData(){
   loading(true); hideErr();
   try{
@@ -412,10 +452,12 @@ async function fetchData(){
   }finally{ loading(false); }
 }
 
-/* ─── PARSE CSV ──────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   PARSE CSV
+═══════════════════════════════════════════════════════════════ */
 function parseCSV(txt){
   const res=Papa.parse(txt,{header:true,skipEmptyLines:true,dynamicTyping:false});
-  if(!res.data.length){ showErr('CSV is empty.'); return; }
+  if(!res.data.length){ showErr('CSV empty.'); return; }
   HDR=Object.keys(res.data[0]);
   allData=res.data;
   mapColumns();
@@ -425,166 +467,147 @@ function parseCSV(txt){
   if(mode===1) applyMode1(); else applyMode2();
 }
 
-/* ─── MAP COLUMNS ────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   MAP COLUMNS (fixed-index for known cols, keyword for others)
+═══════════════════════════════════════════════════════════════ */
 function mapColumns(){
-  // Fixed-index columns
-  C.year      = HDR[IDX.YEAR]      || null;
-  C.month     = HDR[IDX.MONTH]     || null;
-  C.day       = HDR[IDX.DAY]       || null;
-  C.gender    = HDR[IDX.GENDER]    || null;
-  C.nation    = HDR[IDX.NATIONALITY]|| null;
-  C.caseType  = HDR[IDX.CASE_TYPE] || null;
-  C.tariff    = HDR[IDX.TARIFF]    || null;
-  C.enType    = HDR[IDX.EN_TYPE]   || null;  // AA: IPD = Admitted
-  C.disease   = HDR[IDX.DISEASE]   || null;  // AJ: Disease name
-  C.triage    = HDR[IDX.TRIAGE]    || null;  // AW: Triage level
-  C.traumaCol = HDR[IDX.TRAUMA_COL]|| null;  // AX: Trauma/Non-Trauma
+  const h=i=>HDR[i]||null;
+  C.year      =h(IDX.YEAR);
+  C.month     =h(IDX.MONTH);
+  C.day       =h(IDX.DAY);
+  C.gender    =h(IDX.GENDER);
+  C.nation    =h(IDX.NATIONALITY);
+  C.caseType  =h(IDX.CASE_TYPE);
+  C.tariff    =h(IDX.TARIFF);
+  C.enType    =h(IDX.EN_TYPE);
+  C.disease   =h(IDX.DISEASE);
+  C.triage    =h(IDX.TRIAGE);
+  C.traumaCol =h(IDX.TRAUMA_COL);
+  C.refStatus =h(IDX.REF_STATUS);
+  C.refType   =h(IDX.REF_TYPE);
 
-  // Auto-detect: AGE column by keyword
-  C.age = HDR.find(h=>/\bage\b/i.test(h) &&
-    !/group|band|range|triage|stage/i.test(h)) || null;
+  // Age: keyword-based
+  C.age=HDR.find(h=>/\bage\b/i.test(h)&&!/group|band|range|triage|stage/i.test(h))||null;
 
-  // Auto-detect: SERVICE column (scan header names then values)
-  C.service = null;
-  const svcByName = HDR.find(h=>/service|department|ward|unit|clinic/i.test(h));
-  if(svcByName) {
-    // Validate: values contain "emergency"
-    const chk = allData.slice(0,20).map(r=>(r[svcByName]||'').toLowerCase());
-    if(chk.some(v=>v.includes('emerg'))) C.service = svcByName;
+  // Service: scan header names then row values
+  C.service=null;
+  for(const hh of HDR){
+    if(/service|department|ward|unit|clinic/i.test(hh)){
+      const vals=allData.slice(0,20).map(r=>(r[hh]||'').toLowerCase());
+      if(vals.some(v=>v.includes('emerg'))){ C.service=hh; break; }
+    }
   }
   if(!C.service){
-    // Scan all columns' values for "emergency"
-    for(const h of HDR){
-      if(h===C.year||h===C.month||h===C.day) continue;
-      const vals=allData.slice(0,25).map(r=>(r[h]||'').toString().toLowerCase());
-      if(vals.filter(v=>v.includes('emerg')).length >= 3){ C.service=h; break; }
+    for(const hh of HDR){
+      if(hh===C.year||hh===C.month||hh===C.day) continue;
+      const vals=allData.slice(0,30).map(r=>(r[hh]||'').toString().toLowerCase());
+      if(vals.filter(v=>v.includes('emerg')).length>=3){ C.service=hh; break; }
     }
   }
 
-  // Auto-detect: Trauma / Non-Trauma distinction from AX column values
-  // AX column value could be "Trauma" / "Non-Trauma" / "Non Trauma" etc.
-  // We'll count in aggregate()
-
-  console.log('✅ C:', C);
-  console.log('📌 Key headers:', {
-    enType: C.enType, disease: C.disease, triage: C.triage,
-    traumaCol: C.traumaCol, age: C.age, service: C.service
-  });
+  console.log('✅ C:',C);
 }
 
-/* ─── DEBUG ──────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   DEBUG
+═══════════════════════════════════════════════════════════════ */
 function buildDebug(){
   const mapped=new Set(Object.values(C).filter(v=>v&&typeof v==='string'));
   const fields=[
-    ['Year (col A, idx 0)',        C.year,      0],
-    ['Month (col B, idx 1)',       C.month,     1],
-    ['Day (col C, idx 2)',         C.day,       2],
-    ['Gender (col H, idx 7)',      C.gender,    7],
-    ['Nationality (col I, idx 8)', C.nation,    8],
-    ['Case Type (col R, idx 17)',  C.caseType,  17],
-    ['Tariff (col Y, idx 24)',     C.tariff,    24],
-    ['EN Type / IPD (col AA, 26)', C.enType,    26],
-    ['Disease name (col AJ, 35)',  C.disease,   35],
-    ['Triage Level (col AW, 48)',  C.triage,    48],
-    ['Trauma col (col AX, 49)',    C.traumaCol, 49],
-    ['Age (auto-detect)',          C.age,       '?'],
-    ['Service (auto-detect)',      C.service,   '?'],
+    ['Year (A,0)',C.year,0],['Month (B,1)',C.month,1],['Day (C,2)',C.day,2],
+    ['Gender (H,7)',C.gender,7],['Nationality (I,8)',C.nation,8],
+    ['Case Type (R,17)',C.caseType,17],['Tariff (Y,24)',C.tariff,24],
+    ['EN Type/IPD (AA,26)',C.enType,26],['Disease (AJ,35)',C.disease,35],
+    ['Triage (AW,48)',C.triage,48],['Trauma col (AX,49)',C.traumaCol,49],
+    ['Referral Status (BB,53)',C.refStatus,53],['Referral Type (BD,55)',C.refType,55],
+    ['Age (auto)',C.age,'?'],['Service (auto)',C.service,'?']
   ];
-  const sample=col=>{
-    if(!col) return '—';
-    const vals=allData.slice(0,4).map(r=>(r[col]||'').toString().substring(0,18));
-    return [...new Set(vals)].join(' | ');
-  };
-  let html=`
-    <div class="dbg-sec">📊 All Headers (${HDR.length}) — green=mapped, grey=unmapped</div>
+  const samp=col=>col?allData.slice(0,3).map(r=>(r[col]||'').toString().substring(0,15)).join(' | '):'—';
+  let html=`<div class="dbg-sec">📊 Headers (${HDR.length}) — 🟢 mapped 🔘 unmapped</div>
     <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px">
       ${HDR.map((h,i)=>`<span title="idx ${i}" style="background:#263238;
         border:1px solid ${mapped.has(h)?'#A8FF78':'#37474F'};
         color:${mapped.has(h)?'#A8FF78':'#607D8B'};
         padding:1px 5px;border-radius:3px;font-size:9px">${i}:${h.substring(0,12)}</span>`).join('')}
     </div>
-    <div class="dbg-sec">🗂️ Column Mapping</div>
+    <div class="dbg-sec">🗂️ Mapping</div>
     <table style="font-size:10px;border-collapse:collapse;width:100%">
-      <tr style="color:#64FFDA">
-        <th style="text-align:left;padding:2px 7px">Field</th>
-        <th style="text-align:left;padding:2px 7px">Idx</th>
-        <th style="text-align:left;padding:2px 7px">Header Name</th>
-        <th style="text-align:left;padding:2px 7px">Sample Values</th>
-      </tr>
-      ${fields.map(([name,col,idx])=>`
-        <tr>
-          <td style="padding:1px 7px;color:#90A4AE">${name}</td>
-          <td style="padding:1px 7px;color:#607D8B;font-size:9px">${idx}</td>
-          <td style="padding:1px 7px;color:${col?'#A8FF78':'#E57373'};font-weight:700">
-            ${col||'❌ not found'}</td>
-          <td style="padding:1px 7px;color:#607D8B;font-size:9px">${sample(col)}</td>
-        </tr>`).join('')}
+      <tr style="color:#64FFDA"><th style="text-align:left;padding:2px 6px">Field</th>
+        <th style="padding:2px 6px">Idx</th>
+        <th style="text-align:left;padding:2px 6px">Header</th>
+        <th style="text-align:left;padding:2px 6px">Sample</th></tr>
+      ${fields.map(([n,c,i])=>`<tr>
+        <td style="padding:1px 6px;color:#90A4AE">${n}</td>
+        <td style="padding:1px 6px;color:#607D8B;font-size:9px;text-align:center">${i}</td>
+        <td style="padding:1px 6px;color:${c?'#A8FF78':'#E57373'};font-weight:700">${c||'❌ not found'}</td>
+        <td style="padding:1px 6px;color:#607D8B;font-size:9px">${samp(c)}</td></tr>`).join('')}
     </table>
-    <div class="dbg-sec">📝 Row 0 full JSON</div>
-    <pre style="font-size:9px;color:#90A4AE;max-height:180px;overflow:auto;
-      background:#111;padding:8px;border-radius:5px">${JSON.stringify(allData[0],null,2)}</pre>
+    <div class="dbg-sec">📝 Row[0]</div>
+    <pre style="font-size:9px;color:#90A4AE;max-height:180px;overflow:auto;background:#111;padding:8px;border-radius:5px">${JSON.stringify(allData[0],null,2)}</pre>
     <div style="margin-top:6px;color:#FFF176;font-size:10px">
-      💡 AW=index 48 (Triage). AX=index 49 (Trauma). AA=index 26 (EN Type/IPD). AJ=index 35 (Disease).
+      💡 BB=index 53 (Referral Status) · BD=index 55 (Referral Type) · AW=index 48 (Triage)
     </div>`;
   document.getElementById('dbgContent').innerHTML=html;
 }
 
-/* ─── POPULATE DROPDOWNS ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   POPULATE DROPDOWNS
+   Month: read actual unique values from col B and show Jan/Feb…
+═══════════════════════════════════════════════════════════════ */
 function populateDropdowns(){
-  // Year
-  const years=[...new Set(allData.map(r=>r[C.year]).filter(Boolean))].sort();
+  // ── YEAR (from col A)
+  const years=[...new Set(allData.map(r=>(r[C.year]||'').toString().trim()).filter(Boolean))].sort();
   const fY=document.getElementById('fY');
   fY.innerHTML='<option value="">All Years</option>';
   years.forEach(y=>fY.innerHTML+=`<option value="${y}">${y}</option>`);
 
-  // Month
-  const months=[...new Set(allData.map(r=>parseInt(r[C.month]))
-    .filter(v=>!isNaN(v)&&v>=1&&v<=12))].sort((a,b)=>a-b);
+  // ── MONTH (from col B) — parse numeric, show Month name
+  const rawMonths=[...new Set(allData.map(r=>{
+    const v=(r[C.month]||'').toString().trim();
+    const n=parseInt(v);
+    return (!isNaN(n)&&n>=1&&n<=12)?n:null;
+  }).filter(v=>v!==null))].sort((a,b)=>a-b);
+
   const fM=document.getElementById('fM');
   fM.innerHTML='<option value="">All Months</option>';
-  months.forEach(m=>fM.innerHTML+=`<option value="${m}">${MN[m]||m}</option>`);
+  rawMonths.forEach(m=>fM.innerHTML+=`<option value="${m}">${MN[m]} (${m})</option>`);
 
-  // Day — real dates from col C (not just numbers)
-  // Store as "YYYY-MM-DD" or raw value from col C
-  // Show unique sorted values from col C
-  const rawDays=[...new Set(allData.map(r=>(r[C.day]||'').toString().trim())
-    .filter(v=>v&&v!==''))].sort((a,b)=>{
-      // Sort numerically if numbers, else alphabetically
-      const na=parseInt(a), nb=parseInt(b);
-      if(!isNaN(na)&&!isNaN(nb)) return na-nb;
-      return a.localeCompare(b);
-    });
+  // Set compare end month to max available
+  if(rawMonths.length) document.getElementById('cE').value=rawMonths[rawMonths.length-1];
+
+  // ── DAY (from col C) — real values sorted
+  const rawDays=[...new Set(allData.map(r=>(r[C.day]||'').toString().trim()).filter(v=>v&&v!==''))]
+    .sort((a,b)=>{const na=parseInt(a),nb=parseInt(b);
+      return(!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);});
   const fD=document.getElementById('fD');
   fD.innerHTML='<option value="">All Days</option>';
   rawDays.forEach(d=>fD.innerHTML+=`<option value="${d}">${d}</option>`);
-
-  // Compare end month
-  if(months.length) document.getElementById('cE').value=months[months.length-1];
 }
 
-/* ─── FILTER DATA ────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   FILTER DATA
+═══════════════════════════════════════════════════════════════ */
 function filterData(opts={}){
   const{year,month,day,svc,yearVal,monthStart,monthEnd}=opts;
   return allData.filter(r=>{
     const ry=(r[C.year]||'').toString().trim();
-    const rm=parseInt(r[C.month]);
+    const rm=parseInt((r[C.month]||'').toString());
     const rd=(r[C.day]||'').toString().trim();
 
-    if(yearVal!==undefined && ry!==String(yearVal)) return false;
-    if(year    && ry!==String(year)) return false;
-    if(month   && rm!==parseInt(month)) return false;
-    // Day filter: exact string match against col C value
-    if(day     && rd!==String(day)) return false;
-    if(monthStart!==undefined && rm<monthStart) return false;
-    if(monthEnd  !==undefined && rm>monthEnd)   return false;
+    if(yearVal!==undefined&&ry!==String(yearVal)) return false;
+    if(year&&ry!==String(year)) return false;
+    if(month!==undefined&&month!==null&&rm!==parseInt(month)) return false;
+    if(day&&rd!==String(day)) return false;
+    if(monthStart!==undefined&&rm<monthStart) return false;
+    if(monthEnd!==undefined&&rm>monthEnd) return false;
 
     // Service filter
-    if(C.service && svc && svc!=='both'){
+    if(C.service&&svc&&svc!=='both'){
       const sv=(r[C.service]||'').toLowerCase();
-      if(svc==='er'  && !(sv.includes('emergency')&&!sv.includes('opd'))) return false;
-      if(svc==='opd' && !sv.includes('opd')) return false;
+      if(svc==='er'&&sv.includes('opd')) return false;
+      if(svc==='opd'&&!sv.includes('opd')) return false;
     }
-    // Keep only Emergency rows when service col exists
+    // Keep only Emergency rows
     if(C.service){
       const sv=(r[C.service]||'').toLowerCase();
       if(!sv.includes('emerg')) return false;
@@ -593,12 +616,13 @@ function filterData(opts={}){
   });
 }
 
-/* ─── AGGREGATE ──────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   AGGREGATE
+═══════════════════════════════════════════════════════════════ */
 function agg(rows){
   const total=rows.length;
 
-  // ── ADMITTED: EN Type col AA = "IPD" (case-insensitive, trim)
-  // % = admit / total * 100
+  // Admitted: EN Type col AA = "IPD"
   let admit=0;
   if(C.enType){
     admit=rows.filter(r=>{
@@ -607,19 +631,17 @@ function agg(rows){
     }).length;
   }
 
-  // ── ER vs OPD split
-  let erTotal=0, opdTotal=0;
+  // ER / OPD split
+  let erTotal=0,opdTotal=0;
   if(C.service){
     rows.forEach(r=>{
       const sv=(r[C.service]||'').toLowerCase();
-      if(sv.includes('opd')) opdTotal++;
-      else erTotal++;
+      if(sv.includes('opd')) opdTotal++; else erTotal++;
     });
-  } else { erTotal=total; }
+  } else erTotal=total;
 
-  // ── TRAUMA / NON-TRAUMA from col AX
-  // Values in AX are text like "Trauma" / "Non-Trauma" / "Non Trauma"
-  let trauma=0, nontrauma=0;
+  // Trauma / Non-Trauma from col AX (text values)
+  let trauma=0,nontrauma=0;
   if(C.traumaCol){
     rows.forEach(r=>{
       const v=(r[C.traumaCol]||'').toString().trim().toLowerCase();
@@ -628,7 +650,7 @@ function agg(rows){
     });
   }
 
-  // ── CASE TYPE from col R (New / Old)
+  // Case Type (col R)
   const caseMap={};
   rows.forEach(r=>{
     const v=((r[C.caseType]||'').toString().trim()||'Unknown');
@@ -637,29 +659,43 @@ function agg(rows){
   const newCases=Object.entries(caseMap)
     .filter(([k])=>/new/i.test(k)).reduce((a,[,v])=>a+v,0);
 
-  // ── GENDER from col H
+  // Gender (col H)
   const genderMap={};
-  rows.forEach(r=>{
-    const v=((r[C.gender]||'').toString().trim()||'Unknown');
-    genderMap[v]=(genderMap[v]||0)+1;
-  });
+  rows.forEach(r=>{const v=((r[C.gender]||'').toString().trim()||'Unknown');genderMap[v]=(genderMap[v]||0)+1;});
 
-  // ── NATIONALITY from col I
+  // Nationality (col I)
   const nationMap={};
-  rows.forEach(r=>{
-    const v=((r[C.nation]||'').toString().trim()||'Unknown');
-    nationMap[v]=(nationMap[v]||0)+1;
-  });
+  rows.forEach(r=>{const v=((r[C.nation]||'').toString().trim()||'Unknown');nationMap[v]=(nationMap[v]||0)+1;});
 
-  // ── TARIFF from col Y
+  // Tariff (col Y)
   const tariffMap={};
+  rows.forEach(r=>{const v=((r[C.tariff]||'').toString().trim()||'Unknown');tariffMap[v]=(tariffMap[v]||0)+1;});
+
+  // ── REFERRAL STATUS (col BB)
+  const refStatusMap={};
   rows.forEach(r=>{
-    const v=((r[C.tariff]||'').toString().trim()||'Unknown');
-    tariffMap[v]=(tariffMap[v]||0)+1;
+    const v=((r[C.refStatus]||'').toString().trim()||'Unknown');
+    if(v&&v!=='-'&&v!=='') refStatusMap[v]=(refStatusMap[v]||0)+1;
   });
 
-  // ── TRIAGE from col AW
-  // Map raw value → level 1-5
+  // ── REFERRAL TYPE (col BD)
+  const refTypeMap={};
+  rows.forEach(r=>{
+    const v=((r[C.refType]||'').toString().trim()||'Unknown');
+    if(v&&v!=='-'&&v!=='') refTypeMap[v]=(refTypeMap[v]||0)+1;
+  });
+
+  // Derived referral KPIs
+  const refOutKeys=['referred out','refer out','referout','discharge transfer','transfer out'];
+  const refInKeys=['referred in','refer in','referin','transfer in'];
+  const referredOut=Object.entries(refStatusMap)
+    .filter(([k])=>refOutKeys.some(rk=>k.toLowerCase().includes(rk)))
+    .reduce((a,[,v])=>a+v,0);
+  const referredIn=Object.entries(refStatusMap)
+    .filter(([k])=>refInKeys.some(rk=>k.toLowerCase().includes(rk)))
+    .reduce((a,[,v])=>a+v,0);
+
+  // Triage (col AW)
   const triageMap={1:0,2:0,3:0,4:0,5:0};
   rows.forEach(r=>{
     if(!C.triage) return;
@@ -667,16 +703,16 @@ function agg(rows){
     if(!raw) return;
     let lv=null;
     const n=parseInt(raw);
-    if(n>=1&&n<=5){ lv=n; }
-    else if(/resuscitat|level.?1|\bl1\b|esi.?1/.test(raw))         lv=1;
-    else if(/level.?2|\bl2\b|esi.?2|emergent/.test(raw))           lv=2;
-    else if(/level.?3|\bl3\b|esi.?3|^urgent$/.test(raw))           lv=3;
-    else if(/semi.?urgent|level.?4|\bl4\b|esi.?4|yellow/.test(raw))lv=4;
-    else if(/non.?urgent|level.?5|\bl5\b|esi.?5|green|blue/.test(raw))lv=5;
+    if(n>=1&&n<=5) lv=n;
+    else if(/resuscitat|level.?1|\bl1\b|esi.?1/.test(raw)) lv=1;
+    else if(/level.?2|\bl2\b|esi.?2|emergent/.test(raw)) lv=2;
+    else if(/level.?3|\bl3\b|esi.?3|^urgent$/.test(raw)) lv=3;
+    else if(/semi.?urgent|level.?4|\bl4\b|esi.?4|yellow/.test(raw)) lv=4;
+    else if(/non.?urgent|level.?5|\bl5\b|esi.?5|green|blue/.test(raw)) lv=5;
     if(lv) triageMap[lv]++;
   });
 
-  // ── AGE BANDS from numeric age col
+  // Age bands (raw numeric age col)
   const ageBands=AGE_BANDS.map(b=>({...b,count:0}));
   if(C.age){
     rows.forEach(r=>{
@@ -687,26 +723,26 @@ function agg(rows){
     });
   }
 
-  // ── DISEASE from col AJ — disease name (text)
+  // Disease name (col AJ)
   const diseaseMap={};
   if(C.disease){
     rows.forEach(r=>{
       const v=(r[C.disease]||'').toString().trim();
-      if(v && isNaN(parseFloat(v)) && v.toLowerCase()!=='total' && v!=='-' && v.length>1){
+      if(v&&isNaN(parseFloat(v))&&v.toLowerCase()!=='total'&&v!=='-'&&v.length>1)
         diseaseMap[v]=(diseaseMap[v]||0)+1;
-      }
     });
   }
   const diseases=Object.entries(diseaseMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
   return{total,admit,erTotal,opdTotal,trauma,nontrauma,
     newCases,caseMap,genderMap,nationMap,tariffMap,
+    refStatusMap,refTypeMap,referredOut,referredIn,
     triageMap,ageBands,diseases};
 }
 
-/* ════════════════════════════════════════════════════
-   MODE 1
-════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   MODE 1 — apply & render
+═══════════════════════════════════════════════════════════════ */
 function applyMode1(){
   const yr=document.getElementById('fY').value;
   const mo=document.getElementById('fM').value;
@@ -718,15 +754,19 @@ function applyMode1(){
     svc:svc1
   });
   const d=agg(rows);
+
   let lbl='📅 ';
   if(mo) lbl+=MN[parseInt(mo)]+' ';
   if(yr) lbl+=yr; else if(!mo) lbl+='All Data';
   if(dy) lbl+=' Day '+dy;
   lbl+=' — '+(svc1==='both'?'Both':svc1==='er'?'Emerg ER':'Emerg OPD');
-  lbl+=' ('+rows.length+' rows)';
+  lbl+=` (${rows.length} rows)`;
   document.getElementById('lbl1').textContent=lbl;
-  renderKPI1(d); renderCharts1(d);
+
+  renderKPI1(d);
+  renderCharts1(d);
 }
+
 function resetMode1(){
   document.getElementById('fY').value='';
   document.getElementById('fM').value='';
@@ -734,21 +774,28 @@ function resetMode1(){
   setSvc('both'); applyMode1();
 }
 
-/* ════════════════════════════════════════════════════
-   MODE 2
-════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   MODE 2 — compare, respects month range
+═══════════════════════════════════════════════════════════════ */
 function applyMode2(){
   const sm=parseInt(document.getElementById('cS').value);
   const em=parseInt(document.getElementById('cE').value);
   const u25=document.getElementById('ck25').checked;
   const u26=document.getElementById('ck26').checked;
+
+  // Filter each year strictly within chosen month range
   const r25=u25?filterData({yearVal:'2025',monthStart:sm,monthEnd:em,svc:svc2}):[];
   const r26=u26?filterData({yearVal:'2026',monthStart:sm,monthEnd:em,svc:svc2}):[];
   const a25=agg(r25), a26=agg(r26);
+
+  const rangeLabel=sm===em?MN[sm]:`${MN[sm]}–${MN[em]}`;
   document.getElementById('lbl2').textContent=
-    `📅 ${MN[sm]}–${MN[em]}  2025(${r25.length}) vs 2026(${r26.length})`;
-  renderKPI2(a25,a26); renderCharts2(a25,a26);
+    `📅 ${rangeLabel}  |  2025: ${r25.length} rows  vs  2026: ${r26.length} rows`;
+
+  renderKPI2(a25,a26);
+  renderCharts2(a25,a26);
 }
+
 function resetMode2(){
   document.getElementById('cS').value=1;
   document.getElementById('cE').value=12;
@@ -757,25 +804,33 @@ function resetMode2(){
   setCmpSvc('both'); applyMode2();
 }
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    KPI MODE 1
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 function renderKPI1(d){
   const f=n=>Math.round(n||0).toLocaleString();
   const p=(n,t)=>t?(n/t*100).toFixed(1)+'%':'—';
   const T=d.total;
-  set('k0',f(T));          set('k0s','visits');
-  set('k1',f(d.admit));    set('k1s',p(d.admit,T)+' of visits');
-  set('k2',f(d.erTotal));  set('k2s',p(d.erTotal,T));
-  set('k3',f(d.opdTotal)); set('k3s',p(d.opdTotal,T));
-  set('k4',f(d.trauma));   set('k4s',p(d.trauma,T));
-  set('k5',f(d.nontrauma));set('k5s',p(d.nontrauma,T));
-  set('k6',f(d.newCases)); set('k6s',p(d.newCases,T));
+
+  // Reset font size (in case switched from compare mode)
+  ['k0','k1','k2','k3','k4','k5','k6','k8','k9'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.style.fontSize='26px'; el.style.fontWeight='800'; }
+  });
+
+  set('k0',f(T));           set('k0s','visits');
+  set('k1',f(d.admit));     set('k1s',p(d.admit,T)+' of visits');
+  set('k2',f(d.erTotal));   set('k2s',p(d.erTotal,T));
+  set('k3',f(d.opdTotal));  set('k3s',p(d.opdTotal,T));
+  set('k4',f(d.trauma));    set('k4s',p(d.trauma,T));
+  set('k5',f(d.nontrauma)); set('k5s',p(d.nontrauma,T));
+  set('k6',f(d.newCases));  set('k6s',p(d.newCases,T));
+  set('k8',f(d.referredOut)); set('k8s',p(d.referredOut,T)+' (out)');
+  set('k9',f(d.referredIn));  set('k9s',p(d.referredIn,T)+' (in)');
 
   const tT=Object.values(d.triageMap).reduce((a,b)=>a+b,0);
   const crit=(d.triageMap[1]||0)+(d.triageMap[2]||0);
-  document.getElementById('k7h').textContent=
-    `Critical (L1+L2): ${f(crit)} (${p(crit,tT)})`;
+  document.getElementById('k7h').textContent=`Critical (L1+L2): ${f(crit)} (${p(crit,tT)})`;
   buildMiniBar('k7bar',d.triageMap,tT);
   buildBadges('k7badges',d.triageMap);
 }
@@ -789,14 +844,12 @@ function buildMiniBar(id,triage,tT){
 }
 function buildBadges(id,triage){
   const el=document.getElementById(id); if(!el) return;
-  el.innerHTML=[1,2,3,4,5].map(l=>
-    `<span class="tbadge${l===4?' l4':''}" style="background:${TL_COLORS[l-1]}">L${l}:${Math.round(triage[l]||0).toLocaleString()}</span>`
-  ).join('');
+  el.innerHTML=[1,2,3,4,5].map(l=>`<span class="tbadge${l===4?' l4':''}" style="background:${TL_COLORS[l-1]}">L${l}:${Math.round(triage[l]||0).toLocaleString()}</span>`).join('');
 }
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    KPI MODE 2
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 function renderKPI2(a25,a26){
   const f=n=>Math.round(n||0).toLocaleString();
   const p=(n,t)=>t?(n/t*100).toFixed(1)+'%':'—';
@@ -809,25 +862,27 @@ function renderKPI2(a25,a26){
     let cls='neutral-d';
     if(diff!==0) cls=sense==='good_up'?(diff>0?'up-good':'dn-bad'):
                        sense==='bad_up' ?(diff>0?'up-bad':'dn-good'):'neutral-d';
-    return `<span class="${cls}">${arr} ${pct}%</span>`;
+    return `<span class="${cls}">${arr}${pct}%</span>`;
   }
+
   function setCmp(id,v25,v26,s25,s26,sense){
     const el=document.getElementById(id);
-    el.style.fontSize='11px';
-    el.innerHTML=`<span style="color:#78909C">25:</span><b>${f(v25)}</b>&nbsp;<span style="color:#78909C">26:</span><b>${f(v26)}</b>`;
+    if(!el) return;
+    el.style.fontSize='13px'; el.style.fontWeight='700';
+    el.innerHTML=`<span style="color:#78909C;font-size:9px">25:</span>${f(v25)}&nbsp;<span style="color:#78909C;font-size:9px">26:</span>${f(v26)}`;
     const sub=document.getElementById(id+'s');
-    if(sub) sub.innerHTML=dHtml(v25,v26,sense)+(s25?` <span style="font-size:9px;color:#90A4AE">${s25}→${s26}</span>`:'');
+    if(sub) sub.innerHTML=dHtml(v25,v26,sense)+(s25?`&nbsp;<span style="font-size:9px;color:#90A4AE">${s25}→${s26}</span>`:'');
   }
 
   setCmp('k0',a25.total,   a26.total,'','','good_up');
-  setCmp('k1',a25.admit,   a26.admit,
-    p(a25.admit,a25.total),p(a26.admit,a26.total),'neutral_d');
+  setCmp('k1',a25.admit,   a26.admit,   p(a25.admit,a25.total),  p(a26.admit,a26.total),'neutral_d');
   setCmp('k2',a25.erTotal, a26.erTotal,'','','good_up');
   setCmp('k3',a25.opdTotal,a26.opdTotal,'','','good_up');
-  setCmp('k4',a25.trauma,  a26.trauma,
-    p(a25.trauma,a25.total),p(a26.trauma,a26.total),'bad_up');
+  setCmp('k4',a25.trauma,  a26.trauma,  p(a25.trauma,a25.total), p(a26.trauma,a26.total),'bad_up');
   setCmp('k5',a25.nontrauma,a26.nontrauma,'','','good_up');
   setCmp('k6',a25.newCases,a26.newCases,'','','good_up');
+  setCmp('k8',a25.referredOut,a26.referredOut,'','','neutral_d');
+  setCmp('k9',a25.referredIn, a26.referredIn, '','','neutral_d');
 
   const t25=Object.values(a25.triageMap).reduce((a,b)=>a+b,0);
   const t26=Object.values(a26.triageMap).reduce((a,b)=>a+b,0);
@@ -835,129 +890,109 @@ function renderKPI2(a25,a26){
   const c26=(a26.triageMap[1]||0)+(a26.triageMap[2]||0);
   document.getElementById('k7h').innerHTML=
     `<span style="font-size:9px;color:#546E7A">Critical L1+L2</span><br>
-     <span style="font-size:9px"><b>25:</b>${f(c25)}(${p(c25,t25)}) <b>26:</b>${f(c26)}(${p(c26,t26)})</span>
+     <span style="font-size:9px"><b>25:</b>${f(c25)}(${p(c25,t25)})&nbsp;<b>26:</b>${f(c26)}(${p(c26,t26)})</span>
      ${dHtml(c25,c26,'bad_up')}`;
   const bar=document.getElementById('k7bar');
   bar.style.height='auto'; bar.style.flexDirection='column';
-  const seg=(tr,tt)=>[1,2,3,4,5].map(l=>`<div class="tmini-seg" style="width:${tt?((tr[l]||0)/tt*100).toFixed(1):0}%;background:${TL_COLORS[l-1]}"></div>`).join('');
+  const seg=(tr,tt)=>[1,2,3,4,5].map(l=>
+    `<div class="tmini-seg" style="width:${tt?((tr[l]||0)/tt*100).toFixed(1):0}%;background:${TL_COLORS[l-1]}"></div>`
+  ).join('');
   bar.innerHTML=`<div style="font-size:8px;color:#90A4AE">2025</div><div class="tmini">${seg(a25.triageMap,t25)}</div>
     <div style="font-size:8px;color:#90A4AE">2026</div><div class="tmini">${seg(a26.triageMap,t26)}</div>`;
   document.getElementById('k7badges').innerHTML='';
 }
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    CHART HELPERS
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 const fmt=n=>Math.round(n||0).toLocaleString();
 const pct=(n,t)=>t?(n/t*100).toFixed(1)+'%':'0%';
 function killChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 function mkCtx(id){killChart(id);const cv=document.getElementById(id);return cv?cv.getContext('2d'):null;}
 function emptyCV(id,msg='No data'){
-  killChart(id);
-  const cv=document.getElementById(id); if(!cv) return;
+  killChart(id);const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext('2d');
   ctx.clearRect(0,0,cv.width,cv.height);
-  ctx.fillStyle='#90A4AE'; ctx.font='11px Segoe UI';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='#B0BEC5';ctx.font='10px Segoe UI';
+  ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('📭 '+msg,cv.width/2,cv.height/2);
 }
 
-// Donut from object map {label:count}
-function donutFromMap(id,map,pallete){
-  const entries=Object.entries(map).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,12);
+// Donut from {label:count} map, top-N entries
+function donutFromMap(id,map,palette,topN=10){
+  const entries=Object.entries(map).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,topN);
   if(!entries.length){emptyCV(id,'No data');return;}
   const total=entries.reduce((a,[,v])=>a+v,0);
-  const labels=entries.map(e=>e[0]);
-  const data=entries.map(e=>e[1]);
-  const ctx=mkCtx(id); if(!ctx) return;
+  const ctx=mkCtx(id);if(!ctx)return;
   charts[id]=new Chart(ctx,{
     type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:pallete.slice(0,labels.length),
-      borderWidth:2,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+    data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),
+      backgroundColor:palette.slice(0,entries.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
       plugins:{
-        legend:{position:'bottom',labels:{font:{size:9},padding:4,boxWidth:8}},
+        legend:{position:'bottom',labels:{font:{size:8},padding:3,boxWidth:8}},
         tooltip:{callbacks:{label:c=>' '+c.label+': '+fmt(c.raw)+' ('+pct(c.raw,total)+')'}}
       }}
   });
 }
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    CHARTS MODE 1
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 function renderCharts1(d){
   clearDuals();
-  ['ch-casetype','ch-gender','ch-tariff','ch-nation'].forEach(id=>{
-    const cv=document.getElementById(id); if(cv) cv.style.display='';
-  });
+  // Restore single-canvas displays
+  ['ch-casetype','ch-gender','ch-tariff','ch-nation','ch-refstatus','ch-reftype']
+    .forEach(id=>{const cv=document.getElementById(id);if(cv)cv.style.display='';});
 
   const CASE_C  =['#1565C0','#E53935','#43A047','#FF6F00','#9C27B0','#00838F'];
   const GENDER_C=['#1976D2','#E91E63','#78909C','#FF6F00'];
-  const TARIFF_C=['#00897B','#26C6DA','#00ACC1','#006064','#4DB6AC'];
+  const TARIFF_C=['#00897B','#26C6DA','#00ACC1','#006064','#4DB6AC','#B2DFDB'];
   const NATION_C=['#7B1FA2','#AB47BC','#CE93D8','#E040FB','#4A148C',
-                  '#6A1B9A','#8E24AA','#FF6F00','#F57F17','#0D47A1','#1565C0'];
+                  '#6A1B9A','#8E24AA','#FF6F00','#0D47A1','#1565C0','#F57F17'];
+  const REFS_C  =['#0288D1','#29B6F6','#B3E5FC','#0277BD','#039BE5'];
+  const REFT_C  =['#00796B','#26A69A','#80CBC4','#004D40','#00BFA5'];
 
-  donutFromMap('ch-casetype', d.caseMap,   CASE_C);
-  donutFromMap('ch-gender',   d.genderMap, GENDER_C);
-  donutFromMap('ch-tariff',   d.tariffMap, TARIFF_C);
-  donutFromMap('ch-nation',   d.nationMap, NATION_C);
+  donutFromMap('ch-casetype', d.caseMap,     CASE_C);
+  donutFromMap('ch-gender',   d.genderMap,   GENDER_C);
+  donutFromMap('ch-tariff',   d.tariffMap,   TARIFF_C);
+  donutFromMap('ch-nation',   d.nationMap,   NATION_C,12);
+  donutFromMap('ch-refstatus',d.refStatusMap,REFS_C);
+  donutFromMap('ch-reftype',  d.refTypeMap,  REFT_C);
 
   renderTriage1(d);
   renderAge1(d.ageBands);
-  renderDisease1(d.diseases, d.total);
+  renderDisease1(d.diseases,d.total);
 }
 
-/* ── TRIAGE CHART MODE 1 — Bar chart showing count per level ── */
+/* ── TRIAGE BAR CHART MODE 1 ── */
 function renderTriage1(d){
   const tT=Object.values(d.triageMap).reduce((a,b)=>a+b,0);
   clearTriageDual();
-  const cv=document.getElementById('ch-triage');
-  if(cv) cv.style.display='';
+  const cv=document.getElementById('ch-triage');if(cv)cv.style.display='';
   document.getElementById('triageBody').style.display='flex';
-  document.getElementById('tl-legend').style.display='';
 
   if(!tT||!C.triage){
-    emptyCV('ch-triage', C.triage?'No triage data':'Triage col AW (idx 48) not found — check 🔬 Debug');
+    emptyCV('ch-triage',C.triage?'No triage data':'Triage col AW (idx 48) not found');
     document.getElementById('tl-legend').innerHTML=
-      `<span style="color:#90A4AE;font-size:9px">Check 🔬 Debug for column mapping.</span>`;
-    document.getElementById('tl-table').innerHTML='';
-    return;
+      '<span style="color:#90A4AE;font-size:9px">Check 🔬 Debug</span>';
+    document.getElementById('tl-table').innerHTML=''; return;
   }
-
-  // ── Bar chart: each triage level = 1 bar, colored by level
   killChart('ch-triage');
   const ctx=document.getElementById('ch-triage').getContext('2d');
   charts['ch-triage']=new Chart(ctx,{
     type:'bar',
-    data:{
-      labels: TL_NAMES.map((n,i)=>`L${i+1}`),
-      datasets:[{
-        label:'Cases',
-        data:[1,2,3,4,5].map(l=>d.triageMap[l]||0),
-        backgroundColor: TL_COLORS,
-        borderColor: TL_COLORS,
-        borderWidth:1,
-        borderRadius:4
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{
-          title: (items)=>TL_NAMES[items[0].dataIndex],
-          label: c=>' '+fmt(c.raw)+' cases ('+pct(c.raw,tT)+')'
-        }}
-      },
-      scales:{
-        x:{ticks:{font:{size:9},color:'#37474F'},grid:{display:false}},
-        y:{ticks:{font:{size:9}},beginAtZero:true,
-          title:{display:false}}
-      }
-    }
+    data:{labels:TL_NAMES.map((_,i)=>`L${i+1}`),
+      datasets:[{data:[1,2,3,4,5].map(l=>d.triageMap[l]||0),
+        backgroundColor:TL_COLORS,borderColor:TL_COLORS,borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{title:it=>TL_NAMES[it[0].dataIndex],
+          label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,tT)+')'}}},
+      scales:{x:{ticks:{font:{size:9}},grid:{display:false}},
+        y:{ticks:{font:{size:8}},beginAtZero:true}}}
   });
 
-  // Legend
   document.getElementById('tl-legend').innerHTML=[1,2,3,4,5].map(l=>`
     <div class="tl-row">
       <div class="tl-dot" style="background:${TL_COLORS[l-1]}"></div>
@@ -966,140 +1001,96 @@ function renderTriage1(d){
       <span style="color:#90A4AE;font-size:8px;margin-left:2px">${pct(d.triageMap[l]||0,tT)}</span>
     </div>`).join('');
 
-  // Table
   document.getElementById('tl-table').innerHTML=`
-    <table class="tl-tbl">
-      <thead><tr><th>L</th><th>Name</th><th>Count</th><th>%</th></tr></thead>
-      <tbody>${[1,2,3,4,5].map(l=>`
-        <tr>
-          <td><b style="color:${TL_COLORS[l-1]}">${l}</b></td>
-          <td style="text-align:left">${TL_NAMES[l-1]}</td>
-          <td>${fmt(d.triageMap[l]||0)}</td>
-          <td>${pct(d.triageMap[l]||0,tT)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+    <table class="tl-tbl"><thead><tr><th>L</th><th>Name</th><th>Count</th><th>%</th></tr></thead>
+    <tbody>${[1,2,3,4,5].map(l=>`<tr>
+      <td><b style="color:${TL_COLORS[l-1]}">${l}</b></td>
+      <td style="text-align:left">${TL_NAMES[l-1]}</td>
+      <td>${fmt(d.triageMap[l]||0)}</td>
+      <td>${pct(d.triageMap[l]||0,tT)}</td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
-/* ── AGE CHART MODE 1 ── */
+/* ── AGE BAR CHART MODE 1 ── */
 function renderAge1(ageBands){
-  const cv=document.getElementById('ch-age'); if(cv) cv.style.display='';
+  const cv=document.getElementById('ch-age');if(cv)cv.style.display='';
   clearDual('age-d');
-  const hasData=ageBands.some(b=>b.count>0);
-  if(!hasData||!C.age){emptyCV('ch-age','No age data — check 🔬 Debug');return;}
+  if(!ageBands.some(b=>b.count>0)||!C.age){emptyCV('ch-age','No age data');return;}
   killChart('ch-age');
-  const ctx=document.getElementById('ch-age').getContext('2d');
   const ageColors=['#43A047','#66BB6A','#9CCC65','#D4E157','#FFCA28','#FFA726','#FF7043','#EF5350','#B71C1C'];
-  charts['ch-age']=new Chart(ctx,{
+  charts['ch-age']=new Chart(document.getElementById('ch-age').getContext('2d'),{
     type:'bar',
-    data:{
-      labels:ageBands.map(b=>b.label),
-      datasets:[{
-        label:'Patients',
-        data:ageBands.map(b=>b.count),
-        backgroundColor:ageColors,
-        borderColor:ageColors,
-        borderWidth:1,
-        borderRadius:3
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' patients'}}},
-      scales:{
-        x:{ticks:{font:{size:8},maxRotation:35}},
-        y:{ticks:{font:{size:9}},beginAtZero:true}
-      }
-    }
+    data:{labels:ageBands.map(b=>b.label),
+      datasets:[{data:ageBands.map(b=>b.count),
+        backgroundColor:ageColors,borderColor:ageColors,borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' patients'}}},
+      scales:{x:{ticks:{font:{size:8},maxRotation:30}},y:{ticks:{font:{size:8}},beginAtZero:true}}}
   });
 }
 
-/* ── DISEASE CHART MODE 1 ── */
-function renderDisease1(diseases, total){
-  const cv=document.getElementById('ch-disease'); if(cv) cv.style.display='';
+/* ── DISEASE HORIZ BAR MODE 1 ── */
+function renderDisease1(diseases,total){
+  const cv=document.getElementById('ch-disease');if(cv)cv.style.display='';
   clearDual('disease-d');
   const wrap=document.getElementById('dx-table');
-  if(!diseases.length||!C.disease){
-    emptyCV('ch-disease','No diagnosis data — check 🔬 Debug');
-    if(wrap) wrap.innerHTML=''; return;
-  }
+  if(!diseases.length||!C.disease){emptyCV('ch-disease','No diagnosis data');if(wrap)wrap.innerHTML='';return;}
   killChart('ch-disease');
-  const ctx=document.getElementById('ch-disease').getContext('2d');
-  charts['ch-disease']=new Chart(ctx,{
+  charts['ch-disease']=new Chart(document.getElementById('ch-disease').getContext('2d'),{
     type:'bar',
-    data:{
-      labels:diseases.map((d,i)=>MEDALS[i]+' '+d[0].substring(0,24)),
-      datasets:[{
-        data:diseases.map(d=>d[1]),
-        backgroundColor:DX_COLORS,
-        borderColor:DX_COLORS,
-        borderWidth:1,
-        borderRadius:3
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false, indexAxis:'y',
-      plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,total)+')'}}},
-      scales:{
-        x:{ticks:{font:{size:9}}},
-        y:{ticks:{font:{size:9}}}
-      }
-    }
+    data:{labels:diseases.map((d,i)=>MEDALS[i]+' '+d[0].substring(0,22)),
+      datasets:[{data:diseases.map(d=>d[1]),backgroundColor:DX_COLORS,borderColor:DX_COLORS,borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,total)+')'}}},
+      scales:{x:{ticks:{font:{size:8}}},y:{ticks:{font:{size:8}}}}}
   });
   const dxT=diseases.reduce((a,d)=>a+d[1],0);
-  if(wrap) wrap.innerHTML=`
-    <table class="dx-tbl">
-      <thead><tr><th>#</th><th style="text-align:left">Diagnosis</th><th>N</th><th>%</th></tr></thead>
-      <tbody>${diseases.map((d,i)=>`
-        <tr>
-          <td>${MEDALS[i]}</td>
-          <td style="text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d[0]}</td>
-          <td>${fmt(d[1])}</td>
-          <td>${pct(d[1],dxT)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+  if(wrap)wrap.innerHTML=`<table class="dx-tbl">
+    <thead><tr><th>#</th><th style="text-align:left">Diagnosis</th><th>N</th><th>%</th></tr></thead>
+    <tbody>${diseases.map((d,i)=>`<tr><td>${MEDALS[i]}</td>
+      <td style="text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d[0]}</td>
+      <td>${fmt(d[1])}</td><td>${pct(d[1],dxT)}</td></tr>`).join('')}
+    </tbody></table>`;
 }
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    CHARTS MODE 2
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 function renderCharts2(a25,a26){
-  ['ch-casetype','ch-gender','ch-tariff','ch-nation'].forEach(id=>{
-    killChart(id); const cv=document.getElementById(id); if(cv) cv.style.display='none';
+  ['ch-casetype','ch-gender','ch-tariff','ch-nation','ch-refstatus','ch-reftype'].forEach(id=>{
+    killChart(id);const cv=document.getElementById(id);if(cv)cv.style.display='none';
   });
-
   const CASE_C  =['#1565C0','#E53935','#43A047','#FF6F00','#9C27B0'];
   const GENDER_C=['#1976D2','#E91E63','#78909C','#FF6F00'];
   const TARIFF_C=['#00897B','#26C6DA','#00ACC1','#006064','#4DB6AC'];
   const NATION_C=['#7B1FA2','#AB47BC','#CE93D8','#E040FB','#4A148C','#8E24AA'];
+  const REFS_C  =['#0288D1','#29B6F6','#B3E5FC','#0277BD','#039BE5'];
+  const REFT_C  =['#00796B','#26A69A','#80CBC4','#004D40','#00BFA5'];
 
   const mKeys=(m1,m2)=>[...new Set([...Object.keys(m1),...Object.keys(m2)])].sort();
-
-  mkDualFromMap('casetype', mKeys(a25.caseMap,a26.caseMap),
-    a25.caseMap, a26.caseMap, CASE_C, 'w-casetype');
-  mkDualFromMap('gender', mKeys(a25.genderMap,a26.genderMap),
-    a25.genderMap, a26.genderMap, GENDER_C, 'w-gender');
-  mkDualFromMap('tariff', mKeys(a25.tariffMap,a26.tariffMap),
-    a25.tariffMap, a26.tariffMap, TARIFF_C, 'w-tariff');
-  mkDualFromMap('nation', mKeys(a25.nationMap,a26.nationMap),
-    a25.nationMap, a26.nationMap, NATION_C, 'w-nation');
+  mkDualMap('casetype', mKeys(a25.caseMap,a26.caseMap),
+    a25.caseMap,a26.caseMap,CASE_C,'w-casetype');
+  mkDualMap('gender',   mKeys(a25.genderMap,a26.genderMap),
+    a25.genderMap,a26.genderMap,GENDER_C,'w-gender');
+  mkDualMap('tariff',   mKeys(a25.tariffMap,a26.tariffMap),
+    a25.tariffMap,a26.tariffMap,TARIFF_C,'w-tariff');
+  mkDualMap('nation',   mKeys(a25.nationMap,a26.nationMap),
+    a25.nationMap,a26.nationMap,NATION_C,'w-nation');
+  mkDualMap('refstatus',mKeys(a25.refStatusMap,a26.refStatusMap),
+    a25.refStatusMap,a26.refStatusMap,REFS_C,'w-refstatus');
+  mkDualMap('reftype',  mKeys(a25.refTypeMap,a26.refTypeMap),
+    a25.refTypeMap,a26.refTypeMap,REFT_C,'w-reftype');
 
   renderTriage2(a25,a26);
-  renderAge2(a25.ageBands, a26.ageBands);
-  renderDisease2(a25.diseases, a26.diseases);
+  renderAge2(a25.ageBands,a26.ageBands);
+  renderDisease2(a25.diseases,a26.diseases);
 }
 
 /* ── DUAL DONUT FROM MAP ── */
-function mkDualFromMap(key,keys,m25,m26,colors,wrapId){
-  const wrap=document.getElementById(wrapId); if(!wrap) return;
+function mkDualMap(key,keys,m25,m26,colors,wrapId){
+  const wrap=document.getElementById(wrapId);if(!wrap)return;
   let dv=document.getElementById('dd-'+key);
-  if(!dv){
-    dv=document.createElement('div'); dv.id='dd-'+key; dv.className='dual-wrap';
-    wrap.appendChild(dv);
-  }
+  if(!dv){dv=document.createElement('div');dv.id='dd-'+key;dv.className='dual-wrap';wrap.appendChild(dv);}
   dv.style.display='flex';
   [[m25,'2025'],[m26,'2026']].forEach(([map,yr],i)=>{
     const d=keys.map(k=>map[k]||0);
@@ -1107,12 +1098,12 @@ function mkDualFromMap(key,keys,m25,m26,colors,wrapId){
     const cid='dd-cv-'+key+yr;
     let col=document.getElementById('dd-c-'+key+yr);
     if(!col){
-      col=document.createElement('div'); col.id='dd-c-'+key+yr; col.className='dual-col';
+      col=document.createElement('div');col.id='dd-c-'+key+yr;col.className='dual-col';
       col.innerHTML=`<div class="dual-lbl">${yr}</div><div class="dual-cv"><canvas id="${cid}"></canvas></div>`;
       dv.appendChild(col);
     }
     killChart(cid);
-    const cv=document.getElementById(cid); if(!cv) return;
+    const cv=document.getElementById(cid);if(!cv)return;
     charts[cid]=new Chart(cv.getContext('2d'),{
       type:'doughnut',
       data:{labels:keys,datasets:[{data:d,backgroundColor:colors.slice(0,keys.length),
@@ -1126,130 +1117,100 @@ function mkDualFromMap(key,keys,m25,m26,colors,wrapId){
   });
 }
 
-/* ── TRIAGE MODE 2 — Grouped bar ── */
+/* ── TRIAGE GROUPED BAR MODE 2 ── */
 function renderTriage2(a25,a26){
   killChart('ch-triage');
-  const cv=document.getElementById('ch-triage'); if(cv) cv.style.display='';
+  const cv=document.getElementById('ch-triage');if(cv)cv.style.display='';
   clearTriageDual();
   document.getElementById('tl-legend').innerHTML='';
-
-  const t25=Object.values(a25.triageMap).reduce((a,b)=>a+b,0);
-  const t26=Object.values(a26.triageMap).reduce((a,b)=>a+b,0);
-
-  const ctx=document.getElementById('ch-triage').getContext('2d');
-  charts['ch-triage']=new Chart(ctx,{
+  charts['ch-triage']=new Chart(document.getElementById('ch-triage').getContext('2d'),{
     type:'bar',
-    data:{
-      labels:TL_NAMES.map((n,i)=>`L${i+1}`),
+    data:{labels:TL_NAMES.map((_,i)=>`L${i+1}`),
       datasets:[
         {label:'2025',data:[1,2,3,4,5].map(l=>a25.triageMap[l]||0),
           backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:3},
         {label:'2026',data:[1,2,3,4,5].map(l=>a26.triageMap[l]||0),
           backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:3}
-      ]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}},
-        tooltip:{callbacks:{title:items=>TL_NAMES[items[0].dataIndex]}}},
-      scales:{
-        x:{ticks:{font:{size:9}},grid:{display:false}},
-        y:{ticks:{font:{size:9}},beginAtZero:true}
-      }
-    }
+        tooltip:{callbacks:{title:it=>TL_NAMES[it[0].dataIndex]}}},
+      scales:{x:{ticks:{font:{size:9}},grid:{display:false}},
+        y:{ticks:{font:{size:8}},beginAtZero:true}}}
   });
-
+  const t25=Object.values(a25.triageMap).reduce((a,b)=>a+b,0);
+  const t26=Object.values(a26.triageMap).reduce((a,b)=>a+b,0);
   document.getElementById('tl-table').innerHTML=`
-    <table class="tl-tbl">
-      <thead><tr><th>L</th><th>Name</th><th>2025</th><th>2026</th><th>Δ</th></tr></thead>
-      <tbody>${[1,2,3,4,5].map(l=>{
-        const v25=a25.triageMap[l]||0, v26=a26.triageMap[l]||0;
-        const diff=v25?((v26-v25)/v25*100).toFixed(1)+'%':'—';
-        const arr=v26>v25?'▲':v26<v25?'▼':'—';
-        const dc=(l<=2)?(v26>v25?'color:#B71C1C':'color:#2E7D32')
-                       :(v26>v25?'color:#2E7D32':'color:#B71C1C');
-        return `<tr>
-          <td><b style="color:${TL_COLORS[l-1]}">${l}</b></td>
-          <td style="text-align:left">${TL_NAMES[l-1]}</td>
-          <td>${fmt(v25)}</td><td>${fmt(v26)}</td>
-          <td style="${dc}">${arr} ${diff}</td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`;
+    <table class="tl-tbl"><thead><tr><th>L</th><th>Name</th><th>2025</th><th>2026</th><th>Δ</th></tr></thead>
+    <tbody>${[1,2,3,4,5].map(l=>{
+      const v25=a25.triageMap[l]||0,v26=a26.triageMap[l]||0;
+      const d=v25?((v26-v25)/v25*100).toFixed(1)+'%':'—';
+      const arr=v26>v25?'▲':v26<v25?'▼':'—';
+      const dc=(l<=2)?(v26>v25?'color:#B71C1C':'color:#2E7D32'):(v26>v25?'color:#2E7D32':'color:#B71C1C');
+      return `<tr><td><b style="color:${TL_COLORS[l-1]}">${l}</b></td>
+        <td style="text-align:left">${TL_NAMES[l-1]}</td>
+        <td>${fmt(v25)}</td><td>${fmt(v26)}</td>
+        <td style="${dc}">${arr} ${d}</td></tr>`;
+    }).join('')}</tbody></table>`;
 }
 
 /* ── AGE MODE 2 ── */
 function renderAge2(ag25,ag26){
-  const cv=document.getElementById('ch-age'); if(cv) cv.style.display='';
-  clearDual('age-d');
-  killChart('ch-age');
-  const ctx=document.getElementById('ch-age').getContext('2d');
-  charts['ch-age']=new Chart(ctx,{
+  const cv=document.getElementById('ch-age');if(cv)cv.style.display='';
+  clearDual('age-d');killChart('ch-age');
+  charts['ch-age']=new Chart(document.getElementById('ch-age').getContext('2d'),{
     type:'bar',
-    data:{
-      labels:AGE_BANDS.map(b=>b.label),
-      datasets:[
-        {label:'2025',data:ag25.map(b=>b.count),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:2},
-        {label:'2026',data:ag26.map(b=>b.count),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:2}
-      ]
-    },
+    data:{labels:AGE_BANDS.map(b=>b.label),datasets:[
+      {label:'2025',data:ag25.map(b=>b.count),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:2},
+      {label:'2026',data:ag26.map(b=>b.count),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:2}
+    ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}}},
-      scales:{x:{ticks:{font:{size:8},maxRotation:35}},y:{ticks:{font:{size:9}},beginAtZero:true}}}
+      scales:{x:{ticks:{font:{size:8},maxRotation:30}},y:{ticks:{font:{size:8}},beginAtZero:true}}}
   });
 }
 
 /* ── DISEASE MODE 2 ── */
 function renderDisease2(dx25,dx26){
-  const cv=document.getElementById('ch-disease'); if(cv) cv.style.display='';
-  clearDual('disease-d');
-  const wrap=document.getElementById('dx-table');
+  const cv=document.getElementById('ch-disease');if(cv)cv.style.display='';
+  clearDual('disease-d');const wrap=document.getElementById('dx-table');
   const cm={};
   [...(dx25||[]),...(dx26||[])].forEach(([n,v])=>{cm[n]=(cm[n]||0)+v;});
   const top5=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
-  const m25=Object.fromEntries(dx25||[]), m26=Object.fromEntries(dx26||[]);
+  const m25=Object.fromEntries(dx25||[]),m26=Object.fromEntries(dx26||[]);
   if(!top5.length){emptyCV('ch-disease','No diagnosis data');if(wrap)wrap.innerHTML='';return;}
   killChart('ch-disease');
-  const ctx=document.getElementById('ch-disease').getContext('2d');
-  charts['ch-disease']=new Chart(ctx,{
+  charts['ch-disease']=new Chart(document.getElementById('ch-disease').getContext('2d'),{
     type:'bar',
-    data:{
-      labels:top5.map((n,i)=>MEDALS[i]+' '+n.substring(0,20)),
+    data:{labels:top5.map((n,i)=>MEDALS[i]+' '+n.substring(0,18)),
       datasets:[
         {label:'2025',data:top5.map(n=>m25[n]||0),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1},
         {label:'2026',data:top5.map(n=>m26[n]||0),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1}
-      ]
-    },
+      ]},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
       plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}}},
-      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+      scales:{x:{ticks:{font:{size:8}}},y:{ticks:{font:{size:8}}}}}
   });
-  if(wrap) wrap.innerHTML=`
-    <table class="dx-tbl">
-      <thead><tr><th>#</th><th style="text-align:left">Diagnosis</th><th>2025</th><th>2026</th></tr></thead>
-      <tbody>${top5.map((n,i)=>`
-        <tr><td>${MEDALS[i]}</td>
-          <td style="text-align:left">${n.substring(0,22)}</td>
-          <td>${fmt(m25[n]||0)}</td><td>${fmt(m26[n]||0)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+  if(wrap)wrap.innerHTML=`<table class="dx-tbl">
+    <thead><tr><th>#</th><th style="text-align:left">Diagnosis</th><th>2025</th><th>2026</th></tr></thead>
+    <tbody>${top5.map((n,i)=>`<tr><td>${MEDALS[i]}</td>
+      <td style="text-align:left">${n.substring(0,22)}</td>
+      <td>${fmt(m25[n]||0)}</td><td>${fmt(m26[n]||0)}</td></tr>`).join('')}</tbody></table>`;
 }
 
-/* ════════════════════════════════════════════════════
-   CLEANUP HELPERS
-════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   CLEANUP
+═══════════════════════════════════════════════════════════════ */
 function clearDual(id){const e=document.getElementById(id);if(e)e.remove();}
 function clearDuals(){
-  ['dd-casetype','dd-gender','dd-tariff','dd-nation'].forEach(id=>{
-    const e=document.getElementById(id); if(e) e.remove();
-  });
+  ['dd-casetype','dd-gender','dd-tariff','dd-nation','dd-refstatus','dd-reftype']
+    .forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});
 }
 function clearTriageDual(){const e=document.getElementById('dd-triage');if(e)e.remove();}
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    MODE / SERVICE TOGGLES
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 function switchMode(m){
   mode=m;
   document.querySelectorAll('.tab').forEach((t,i)=>t.className='tab '+(i===m-1?'on':'off'));
@@ -1269,17 +1230,17 @@ function setCmpSvc(s){
   document.getElementById(s==='both'?'s2b':s==='er'?'s2e':'s2o').classList.add('on');
 }
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    UTILS
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function loading(v){document.getElementById('overlay').style.display=v?'flex':'none';}
 function showErr(m){document.getElementById('errMsg').textContent=m;document.getElementById('errbanner').style.display='flex';}
 function hideErr(){document.getElementById('errbanner').style.display='none';}
 
-/* ════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    INIT
-════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded',fetchData);
 </script>
 </body>
