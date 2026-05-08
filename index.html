@@ -28,7 +28,7 @@ html,body{height:100%;width:100%;overflow:hidden;
    Row2 has 5 charts (triage wider + 4 others)         */
 #app{
   display:grid;
-  grid-template-rows:5vh 4.5vh 6vh 13vh 34vh 31.5vh 3vh;
+  grid-template-rows:5vh 4.5vh 6vh 13vh 33vh 30.5vh 3vh;
   height:100vh;width:100%
 }
 
@@ -228,9 +228,9 @@ select:focus{border-color:var(--blue)}
   <div id="fbar">
     <!-- MODE 1 -->
     <div id="f1" class="fg">
-      <select id="fY" style="width:80px"><option value="">All Years</option></select>
-      <select id="fM" style="width:96px"><option value="">All Months</option></select>
-      <select id="fD" style="width:110px"><option value="">All Days</option></select>
+      <select id="fY" style="width:82px"><option value="">All Years</option></select>
+      <select id="fM" style="width:118px"><option value="">— All Months —</option></select>
+      <select id="fD" style="width:78px"><option value="">All Days</option></select>
       <div class="svc-grp">
         <button class="svc on" id="s1b" onclick="setSvc('both')">🔘 Both</button>
         <button class="svc"    id="s1e" onclick="setSvc('er')">ER</button>
@@ -242,19 +242,19 @@ select:focus{border-color:var(--blue)}
     </div>
     <!-- MODE 2 -->
     <div id="f2" class="fg" style="display:none">
-      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">From Month:</span>
-      <select id="cS" style="width:78px">
-        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
-        <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
-        <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
-        <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">From:</span>
+      <select id="cS" style="width:108px">
+        <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+        <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+        <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+        <option value="10">October</option><option value="11">November</option><option value="12">December</option>
       </select>
-      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">To Month:</span>
-      <select id="cE" style="width:78px">
-        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
-        <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
-        <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
-        <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">To:</span>
+      <select id="cE" style="width:108px">
+        <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+        <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+        <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+        <option value="10">October</option><option value="11">November</option><option value="12">December</option>
       </select>
       <div class="svc-grp">
         <button class="svc on" id="s2b" onclick="setCmpSvc('both')">🔘 Both</button>
@@ -383,7 +383,7 @@ select:focus{border-color:var(--blue)}
   <div id="ftr">
     <span>🏥 Royal Angkor International Hospital</span>
     <span>|</span><span>BDMS Member</span>
-    <span>|</span><span>Emergency Dashboard v4.2</span>
+    <span>|</span><span>Emergency Dashboard v4.3</span>
     <span>|</span><span>⏱ <b id="lastUp">—</b></span>
     <span>|</span><span id="rowCount" style="color:#607D8B"></span>
   </div>
@@ -551,37 +551,83 @@ function buildDebug(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   PARSE MONTH  — col B can be:
+     • numeric string  "1" … "12"
+     • full name       "January" … "December"
+     • short name      "Jan" … "Dec"
+     • date string     "2025-01-15"  → extract month part
+   Returns integer 1-12 or null
+════════════════════════════════════════════════════════════════ */
+const MN_FULL=['','January','February','March','April','May','June',
+               'July','August','September','October','November','December'];
+const MN_SHORT=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function parseMonthVal(raw){
+  if(!raw) return null;
+  const s=raw.toString().trim();
+  // numeric
+  const n=parseInt(s);
+  if(!isNaN(n)&&n>=1&&n<=12) return n;
+  // full name
+  const fi=MN_FULL.findIndex(m=>m&&m.toLowerCase()===s.toLowerCase());
+  if(fi>0) return fi;
+  // short name
+  const si=MN_SHORT.findIndex(m=>m&&m.toLowerCase()===s.toLowerCase());
+  if(si>0) return si;
+  // date string YYYY-MM-DD → extract month
+  const dm=s.match(/^\d{4}-(\d{1,2})/);
+  if(dm){const mn=parseInt(dm[1]);if(mn>=1&&mn<=12)return mn;}
+  return null;
+}
+
+/* ── PARSE DAY — col C can be "5", "05", "2025-01-05" etc. → int 1-31 */
+function parseDayVal(raw){
+  if(!raw) return null;
+  const s=raw.toString().trim();
+  // date string YYYY-MM-DD → extract day
+  const dm=s.match(/^\d{4}-\d{1,2}-(\d{1,2})/);
+  if(dm){const dn=parseInt(dm[1]);if(dn>=1&&dn<=31)return dn;}
+  // plain number
+  const n=parseInt(s);
+  if(!isNaN(n)&&n>=1&&n<=31) return n;
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    POPULATE DROPDOWNS
-   Month: read actual unique values from col B and show Jan/Feb…
 ═══════════════════════════════════════════════════════════════ */
 function populateDropdowns(){
-  // ── YEAR (from col A)
+  // ── YEAR (col A) — unique sorted
   const years=[...new Set(allData.map(r=>(r[C.year]||'').toString().trim()).filter(Boolean))].sort();
   const fY=document.getElementById('fY');
   fY.innerHTML='<option value="">All Years</option>';
   years.forEach(y=>fY.innerHTML+=`<option value="${y}">${y}</option>`);
 
-  // ── MONTH (from col B) — parse numeric, show Month name
-  const rawMonths=[...new Set(allData.map(r=>{
-    const v=(r[C.month]||'').toString().trim();
-    const n=parseInt(v);
-    return (!isNaN(n)&&n>=1&&n<=12)?n:null;
-  }).filter(v=>v!==null))].sort((a,b)=>a-b);
-
+  // ── MONTH — fixed full list: January … December
   const fM=document.getElementById('fM');
-  fM.innerHTML='<option value="">All Months</option>';
-  rawMonths.forEach(m=>fM.innerHTML+=`<option value="${m}">${MN[m]} (${m})</option>`);
+  fM.innerHTML='<option value="">— All Months —</option>';
+  for(let m=1;m<=12;m++){
+    fM.innerHTML+=`<option value="${m}">${MN_FULL[m]}</option>`;
+  }
 
-  // Set compare end month to max available
-  if(rawMonths.length) document.getElementById('cE').value=rawMonths[rawMonths.length-1];
+  // ── Compare month selectors — full month names, 1-12
+  ['cS','cE'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.innerHTML='';
+    for(let m=1;m<=12;m++){
+      el.innerHTML+=`<option value="${m}">${MN_FULL[m]}</option>`;
+    }
+  });
+  // Default cE = latest month present in data
+  const presentMonths=[...new Set(allData.map(r=>parseMonthVal(r[C.month])).filter(Boolean))].sort((a,b)=>a-b);
+  if(presentMonths.length) document.getElementById('cE').value=presentMonths[presentMonths.length-1];
 
-  // ── DAY (from col C) — real values sorted
-  const rawDays=[...new Set(allData.map(r=>(r[C.day]||'').toString().trim()).filter(v=>v&&v!==''))]
-    .sort((a,b)=>{const na=parseInt(a),nb=parseInt(b);
-      return(!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);});
+  // ── DAY — fixed 1-31 (always full list regardless of data)
   const fD=document.getElementById('fD');
   fD.innerHTML='<option value="">All Days</option>';
-  rawDays.forEach(d=>fD.innerHTML+=`<option value="${d}">${d}</option>`);
+  for(let d=1;d<=31;d++){
+    fD.innerHTML+=`<option value="${d}">${d < 10 ? '0'+d : d}</option>`;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -591,15 +637,15 @@ function filterData(opts={}){
   const{year,month,day,svc,yearVal,monthStart,monthEnd}=opts;
   return allData.filter(r=>{
     const ry=(r[C.year]||'').toString().trim();
-    const rm=parseInt((r[C.month]||'').toString());
-    const rd=(r[C.day]||'').toString().trim();
+    const rm=parseMonthVal(r[C.month]);   // handles numeric/name/date-string
+    const rd=parseDayVal(r[C.day]);       // handles numeric/date-string → int 1-31
 
     if(yearVal!==undefined&&ry!==String(yearVal)) return false;
     if(year&&ry!==String(year)) return false;
-    if(month!==undefined&&month!==null&&rm!==parseInt(month)) return false;
-    if(day&&rd!==String(day)) return false;
-    if(monthStart!==undefined&&rm<monthStart) return false;
-    if(monthEnd!==undefined&&rm>monthEnd) return false;
+    if(month!==undefined&&month!==null&&parseInt(month)>0&&rm!==parseInt(month)) return false;
+    if(day!==undefined&&day!==null&&parseInt(day)>0&&rd!==parseInt(day)) return false;
+    if(monthStart!==undefined&&(rm===null||rm<monthStart)) return false;
+    if(monthEnd!==undefined&&(rm===null||rm>monthEnd)) return false;
 
     // Service filter
     if(C.service&&svc&&svc!=='both'){
@@ -756,7 +802,7 @@ function applyMode1(){
   const d=agg(rows);
 
   let lbl='📅 ';
-  if(mo) lbl+=MN[parseInt(mo)]+' ';
+  if(mo) lbl+=MN_FULL[parseInt(mo)]+' ';
   if(yr) lbl+=yr; else if(!mo) lbl+='All Data';
   if(dy) lbl+=' Day '+dy;
   lbl+=' — '+(svc1==='both'?'Both':svc1==='er'?'Emerg ER':'Emerg OPD');
@@ -783,14 +829,18 @@ function applyMode2(){
   const u25=document.getElementById('ck25').checked;
   const u26=document.getElementById('ck26').checked;
 
+  // Auto-swap if From > To
+  const smF=Math.min(sm,em), emF=Math.max(sm,em);
+
   // Filter each year strictly within chosen month range
-  const r25=u25?filterData({yearVal:'2025',monthStart:sm,monthEnd:em,svc:svc2}):[];
-  const r26=u26?filterData({yearVal:'2026',monthStart:sm,monthEnd:em,svc:svc2}):[];
+  const r25=u25?filterData({yearVal:'2025',monthStart:smF,monthEnd:emF,svc:svc2}):[];
+  const r26=u26?filterData({yearVal:'2026',monthStart:smF,monthEnd:emF,svc:svc2}):[];
   const a25=agg(r25), a26=agg(r26);
 
-  const rangeLabel=sm===em?MN[sm]:`${MN[sm]}–${MN[em]}`;
+  const rangeLabel=smF===emF?MN_FULL[smF]:`${MN_FULL[smF]} – ${MN_FULL[emF]}`;
+  const svcLabel=svc2==='both'?'Both':svc2==='er'?'ER':'OPD';
   document.getElementById('lbl2').textContent=
-    `📅 ${rangeLabel}  |  2025: ${r25.length} rows  vs  2026: ${r26.length} rows`;
+    `📅 ${rangeLabel}  ·  ${svcLabel}  |  2025: ${r25.length} rows  vs  2026: ${r26.length} rows`;
 
   renderKPI2(a25,a26);
   renderCharts2(a25,a26);
@@ -1108,9 +1158,11 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
       type:'doughnut',
       data:{labels:keys,datasets:[{data:d,backgroundColor:colors.slice(0,keys.length),
         borderWidth:1,borderColor:'#fff'}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      options:{responsive:true,maintainAspectRatio:false,cutout:'50%',
         plugins:{
-          legend:{display:i===1,position:'bottom',labels:{font:{size:8},padding:3,boxWidth:7}},
+          legend:{display:i===1,position:'bottom',
+            labels:{font:{size:7},padding:2,boxWidth:6,
+              filter:(item)=>item.text.length<18}},
           tooltip:{callbacks:{label:c=>' '+c.label+': '+fmt(c.raw)+' ('+pct(c.raw,tot)+')'}}
         }}
     });
@@ -1133,10 +1185,10 @@ function renderTriage2(a25,a26){
           backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:3}
       ]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}},
+      plugins:{legend:{position:'top',labels:{font:{size:8},padding:2,boxWidth:8}},
         tooltip:{callbacks:{title:it=>TL_NAMES[it[0].dataIndex]}}},
-      scales:{x:{ticks:{font:{size:9}},grid:{display:false}},
-        y:{ticks:{font:{size:8}},beginAtZero:true}}}
+      scales:{x:{ticks:{font:{size:8}},grid:{display:false}},
+        y:{ticks:{font:{size:7}},beginAtZero:true}}}
   });
   const t25=Object.values(a25.triageMap).reduce((a,b)=>a+b,0);
   const t26=Object.values(a26.triageMap).reduce((a,b)=>a+b,0);
