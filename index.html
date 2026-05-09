@@ -383,7 +383,7 @@ select:focus{border-color:var(--blue)}
   <div id="ftr">
     <span>🏥 Royal Angkor International Hospital</span>
     <span>|</span><span>BDMS Member</span>
-    <span>|</span><span>Emergency Dashboard v4.4</span>
+    <span>|</span><span>Emergency Dashboard v4.5</span>
     <span>|</span><span>⏱ <b id="lastUp">—</b></span>
     <span>|</span><span id="rowCount" style="color:#607D8B"></span>
   </div>
@@ -980,20 +980,37 @@ function donutFromMap(id,map,palette,topN=10,excludeUnknown=false){
   if(!entries.length){emptyCV(id,'No data');return;}
   const total=entries.reduce((a,[,v])=>a+v,0);
   const ctx=mkCtx(id);if(!ctx)return;
+  // Truncate long label names for display
+  const dispLabels=entries.map(e=>e[0].length>22?e[0].substring(0,21)+'…':e[0]);
+  const fullLabels=entries.map(e=>e[0]);
   charts[id]=new Chart(ctx,{
     type:'doughnut',
-    data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),
-      backgroundColor:palette.slice(0,entries.length),borderWidth:1.5,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+    data:{
+      labels:dispLabels,
+      datasets:[{
+        data:entries.map(e=>e[1]),
+        backgroundColor:palette.slice(0,entries.length),
+        borderWidth:1.5,
+        borderColor:'#fff'
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      cutout:'65%',
       plugins:{
-        legend:{position:'bottom',labels:{font:{size:7.5},padding:2,boxWidth:7,
-          generateLabels(chart){
-            const orig=Chart.defaults.plugins.legend.labels.generateLabels(chart);
-            orig.forEach(l=>{if(l.text&&l.text.length>22)l.text=l.text.substring(0,21)+'…';});
-            return orig;
-          }}},
-        tooltip:{callbacks:{label:c=>' '+c.label+': '+fmt(c.raw)+' ('+pct(c.raw,total)+')'}}
-      }}
+        legend:{
+          position:'bottom',
+          labels:{font:{size:7.5},padding:2,boxWidth:7}
+        },
+        tooltip:{
+          callbacks:{
+            title:items=>fullLabels[items[0].dataIndex]||'',
+            label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,total)+')'
+          }
+        }
+      }
+    }
   });
 }
 
@@ -1158,6 +1175,8 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
   let dv=document.getElementById('dd-'+key);
   if(!dv){dv=document.createElement('div');dv.id='dd-'+key;dv.className='dual-wrap';wrap.appendChild(dv);}
   dv.style.display='flex';
+  // Truncated display labels (for legend), full labels kept for tooltip
+  const dispKeys=keys.map(k=>k.length>20?k.substring(0,19)+'…':k);
   [[m25,'2025'],[m26,'2026']].forEach(([map,yr],i)=>{
     const d=keys.map(k=>map[k]||0);
     const tot=d.reduce((a,b)=>a+b,0);
@@ -1172,19 +1191,22 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
     const cv=document.getElementById(cid);if(!cv)return;
     charts[cid]=new Chart(cv.getContext('2d'),{
       type:'doughnut',
-      data:{labels:keys,datasets:[{data:d,backgroundColor:colors.slice(0,keys.length),
-        borderWidth:1,borderColor:'#fff'}]},
+      data:{
+        labels:dispKeys,
+        datasets:[{data:d,backgroundColor:colors.slice(0,keys.length),
+          borderWidth:1,borderColor:'#fff'}]
+      },
       options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
         plugins:{
-          legend:{display:i===1,position:'bottom',
-            labels:{font:{size:7},padding:2,boxWidth:6,
-              generateLabels(chart){
-                const orig=Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                orig.forEach(l=>{if(l.text&&l.text.length>20)l.text=l.text.substring(0,19)+'…';});
-                return orig;
-              }
-            }},
-          tooltip:{callbacks:{label:c=>' '+c.label+': '+fmt(c.raw)+' ('+pct(c.raw,tot)+')'}}
+          legend:{
+            display:i===1,
+            position:'bottom',
+            labels:{font:{size:7},padding:2,boxWidth:6}
+          },
+          tooltip:{callbacks:{
+            title:items=>keys[items[0].dataIndex]||'',
+            label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,tot)+')'
+          }}
         }}
     });
   });
