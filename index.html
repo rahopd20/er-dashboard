@@ -383,7 +383,7 @@ select:focus{border-color:var(--blue)}
   <div id="ftr">
     <span>🏥 Royal Angkor International Hospital</span>
     <span>|</span><span>BDMS Member</span>
-    <span>|</span><span>Emergency Dashboard v4.5</span>
+    <span>|</span><span>Emergency Dashboard v4.6</span>
     <span>|</span><span>⏱ <b id="lastUp">—</b></span>
     <span>|</span><span id="rowCount" style="color:#607D8B"></span>
   </div>
@@ -1019,7 +1019,7 @@ function donutFromMap(id,map,palette,topN=10,excludeUnknown=false){
 ═══════════════════════════════════════════════════════════════ */
 function renderCharts1(d){
   clearDuals();
-  // Restore single-canvas displays
+  clearCmpCharts(); // hide compare-mode bar charts
   ['ch-casetype','ch-gender','ch-tariff','ch-nation','ch-refstatus','ch-reftype']
     .forEach(id=>{const cv=document.getElementById(id);if(cv)cv.style.display='';});
 
@@ -1135,9 +1135,7 @@ function renderDisease1(diseases,total){
    CHARTS MODE 2
 ═══════════════════════════════════════════════════════════════ */
 function renderCharts2(a25,a26){
-  ['ch-casetype','ch-gender','ch-tariff','ch-nation','ch-refstatus','ch-reftype'].forEach(id=>{
-    killChart(id);const cv=document.getElementById(id);if(cv)cv.style.display='none';
-  });
+  // mkDualMap now handles hiding single-mode canvases internally
   const CASE_C  =['#1565C0','#E53935','#43A047','#FF6F00','#9C27B0'];
   const GENDER_C=['#1976D2','#E91E63','#78909C','#FF6F00'];
   const TARIFF_C=['#00897B','#26C6DA','#00ACC1','#006064','#4DB6AC'];
@@ -1169,47 +1167,75 @@ function renderCharts2(a25,a26){
   renderDisease2(a25.diseases,a26.diseases);
 }
 
-/* ── DUAL DONUT FROM MAP ── */
+/* ── COMPARE MODE: Horizontal grouped bar (replaces dual donut) ──
+   Always fits inside any card height. Labels always visible.      */
 function mkDualMap(key,keys,m25,m26,colors,wrapId){
   const wrap=document.getElementById(wrapId);if(!wrap)return;
-  let dv=document.getElementById('dd-'+key);
-  if(!dv){dv=document.createElement('div');dv.id='dd-'+key;dv.className='dual-wrap';wrap.appendChild(dv);}
-  dv.style.display='flex';
-  // Truncated display labels (for legend), full labels kept for tooltip
-  const dispKeys=keys.map(k=>k.length>20?k.substring(0,19)+'…':k);
-  [[m25,'2025'],[m26,'2026']].forEach(([map,yr],i)=>{
-    const d=keys.map(k=>map[k]||0);
-    const tot=d.reduce((a,b)=>a+b,0);
-    const cid='dd-cv-'+key+yr;
-    let col=document.getElementById('dd-c-'+key+yr);
-    if(!col){
-      col=document.createElement('div');col.id='dd-c-'+key+yr;col.className='dual-col';
-      col.innerHTML=`<div class="dual-lbl">${yr}</div><div class="dual-cv"><canvas id="${cid}"></canvas></div>`;
-      dv.appendChild(col);
-    }
-    killChart(cid);
-    const cv=document.getElementById(cid);if(!cv)return;
-    charts[cid]=new Chart(cv.getContext('2d'),{
-      type:'doughnut',
-      data:{
-        labels:dispKeys,
-        datasets:[{data:d,backgroundColor:colors.slice(0,keys.length),
-          borderWidth:1,borderColor:'#fff'}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-        plugins:{
-          legend:{
-            display:i===1,
-            position:'bottom',
-            labels:{font:{size:7},padding:2,boxWidth:6}
-          },
-          tooltip:{callbacks:{
-            title:items=>keys[items[0].dataIndex]||'',
-            label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,tot)+')'
-          }}
+  // Remove old dual-donut wrappers
+  const old=document.getElementById('dd-'+key);if(old)old.remove();
+  // Map key → original single-mode canvas ID
+  const cvIdMap={casetype:'ch-casetype',gender:'ch-gender',tariff:'ch-tariff',
+    nation:'ch-nation',refstatus:'ch-refstatus',reftype:'ch-reftype'};
+  const sinCv=document.getElementById(cvIdMap[key]||('ch-'+key));
+  if(sinCv){killChart(cvIdMap[key]||('ch-'+key));sinCv.style.display='none';}
+
+  // Get or create a dedicated compare canvas inside the wrap div
+  let cmpCv=document.getElementById('cmp-cv-'+key);
+  if(!cmpCv){
+    cmpCv=document.createElement('canvas');
+    cmpCv.id='cmp-cv-'+key;
+    // fill the cwrap container
+    cmpCv.style.cssText='position:absolute;inset:0;width:100%;height:100%';
+    wrap.style.position='relative';
+    wrap.appendChild(cmpCv);
+  }
+  cmpCv.style.display='';
+
+  // Top-8 categories by combined volume
+  const combined=keys.map(k=>({k,v:(m25[k]||0)+(m26[k]||0)}))
+    .sort((a,b)=>b.v-a.v).slice(0,8);
+  const topKeys=combined.map(x=>x.k);
+  const dispLabels=topKeys.map(k=>k.length>17?k.substring(0,16)+'…':k);
+  const d25=topKeys.map(k=>m25[k]||0);
+  const d26=topKeys.map(k=>m26[k]||0);
+  const tot25=d25.reduce((a,b)=>a+b,0);
+  const tot26=d26.reduce((a,b)=>a+b,0);
+
+  killChart('cmp-'+key);
+  charts['cmp-'+key]=new Chart(cmpCv.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:dispLabels,
+      datasets:[
+        {label:'2025',data:d25,backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:2},
+        {label:'2026',data:d26,backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:2}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      indexAxis:'y',
+      plugins:{
+        legend:{position:'top',align:'end',labels:{font:{size:8},padding:3,boxWidth:9}},
+        tooltip:{callbacks:{
+          title:items=>topKeys[items[0].dataIndex]||'',
+          label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,c.datasetIndex===0?tot25:tot26)+')'
         }}
-    });
+      },
+      scales:{
+        x:{ticks:{font:{size:7.5},maxTicksLimit:5},grid:{color:'#F5F5F5'}},
+        y:{ticks:{font:{size:7.5}},grid:{display:false}}
+      },
+      layout:{padding:{right:2,top:0}}
+    }
   });
+}
+
+// Kill compare-mode charts when returning to single mode
+function clearCmpCharts(){
+  Object.keys(charts).filter(k=>k.startsWith('cmp-')).forEach(k=>{
+    charts[k].destroy();delete charts[k];
+  });
+  document.querySelectorAll('[id^="cmp-cv-"]').forEach(el=>el.style.display='none');
 }
 
 /* ── TRIAGE GROUPED BAR MODE 2 ── */
