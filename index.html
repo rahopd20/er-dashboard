@@ -221,7 +221,7 @@ select:focus{border-color:var(--blue)}
   <!-- TABS -->
   <div id="tabs">
     <button class="tab on"  onclick="switchMode(1)">🗓️ Single Period View</button>
-    <button class="tab off" onclick="switchMode(2)">📊 Year Comparison 2025 vs 2026</button>
+    <button class="tab off" id="tabCmp" onclick="switchMode(2)">📊 Year Comparison</button>
   </div>
 
   <!-- FILTER BAR -->
@@ -240,32 +240,41 @@ select:focus{border-color:var(--blue)}
       <button class="freset" onclick="resetMode1()">Reset ↺</button>
       <span class="flbl" id="lbl1">📅 Showing: All Data</span>
     </div>
-    <!-- MODE 2 -->
+    <!-- MODE 2 — dynamic year comparison -->
     <div id="f2" class="fg" style="display:none">
-      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">From:</span>
+      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">From Month:</span>
       <select id="cS" style="width:108px">
         <option value="1">January</option><option value="2">February</option><option value="3">March</option>
         <option value="4">April</option><option value="5">May</option><option value="6">June</option>
         <option value="7">July</option><option value="8">August</option><option value="9">September</option>
         <option value="10">October</option><option value="11">November</option><option value="12">December</option>
       </select>
-      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">To:</span>
+      <span style="font-size:10px;color:#546E7A;font-weight:600;white-space:nowrap">To Month:</span>
       <select id="cE" style="width:108px">
         <option value="1">January</option><option value="2">February</option><option value="3">March</option>
         <option value="4">April</option><option value="5">May</option><option value="6">June</option>
         <option value="7">July</option><option value="8">August</option><option value="9">September</option>
         <option value="10">October</option><option value="11">November</option><option value="12">December</option>
       </select>
+      <!-- Year A selector -->
+      <span style="font-size:10px;color:#1565C0;font-weight:700;white-space:nowrap">🔵 Year A:</span>
+      <select id="cYA" style="width:74px;border-color:#1565C0;color:#1565C0;font-weight:700">
+        <option value="">—</option>
+      </select>
+      <span style="font-size:13px;color:#546E7A;font-weight:700">vs</span>
+      <!-- Year B selector -->
+      <span style="font-size:10px;color:#FF6F00;font-weight:700;white-space:nowrap">🟠 Year B:</span>
+      <select id="cYB" style="width:74px;border-color:#FF6F00;color:#FF6F00;font-weight:700">
+        <option value="">—</option>
+      </select>
       <div class="svc-grp">
         <button class="svc on" id="s2b" onclick="setCmpSvc('both')">🔘 Both</button>
         <button class="svc"    id="s2e" onclick="setCmpSvc('er')">ER</button>
         <button class="svc"    id="s2o" onclick="setCmpSvc('opd')">OPD</button>
       </div>
-      <label class="chklbl"><input type="checkbox" id="ck25" checked> 2025</label>
-      <label class="chklbl"><input type="checkbox" id="ck26" checked> 2026</label>
       <button class="fapply" onclick="applyMode2()">Apply 🔍</button>
       <button class="freset" onclick="resetMode2()">Reset ↺</button>
-      <span class="flbl" id="lbl2">📅 Comparing: 2025 vs 2026</span>
+      <span class="flbl" id="lbl2">📅 Comparing: —</span>
     </div>
   </div>
 
@@ -383,7 +392,7 @@ select:focus{border-color:var(--blue)}
   <div id="ftr">
     <span>🏥 Royal Angkor International Hospital</span>
     <span>|</span><span>BDMS Member</span>
-    <span>|</span><span>Emergency Dashboard v4.6</span>
+    <span>|</span><span>Emergency Dashboard v4.7</span>
     <span>|</span><span>⏱ <b id="lastUp">—</b></span>
     <span>|</span><span id="rowCount" style="color:#607D8B"></span>
   </div>
@@ -622,12 +631,35 @@ function populateDropdowns(){
   const presentMonths=[...new Set(allData.map(r=>parseMonthVal(r[C.month])).filter(Boolean))].sort((a,b)=>a-b);
   if(presentMonths.length) document.getElementById('cE').value=presentMonths[presentMonths.length-1];
 
+  // ── Compare YEAR A / YEAR B — auto-populated from actual years in data
+  // Default: Year A = oldest, Year B = newest (or +1)
+  ['cYA','cYB'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.innerHTML='<option value="">— Select —</option>';
+    years.forEach(y=>el.innerHTML+=`<option value="${y}">${y}</option>`);
+  });
+  // Smart defaults: A = first year, B = second year (or same as first if only one)
+  if(years.length>=1) document.getElementById('cYA').value=years[0];
+  if(years.length>=2) document.getElementById('cYB').value=years[1];
+  else if(years.length===1) document.getElementById('cYB').value=years[0];
+
+  // Update tab label
+  updateTabLabel();
+
   // ── DAY — fixed 1-31 (always full list regardless of data)
   const fD=document.getElementById('fD');
   fD.innerHTML='<option value="">All Days</option>';
   for(let d=1;d<=31;d++){
     fD.innerHTML+=`<option value="${d}">${d < 10 ? '0'+d : d}</option>`;
   }
+}
+
+// Update the tab button label whenever years change
+function updateTabLabel(){
+  const yA=document.getElementById('cYA')?.value||'';
+  const yB=document.getElementById('cYB')?.value||'';
+  const tab=document.getElementById('tabCmp');
+  if(tab) tab.textContent='📊 '+(yA&&yB?`${yA} vs ${yB}`:'Year Comparison');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -823,36 +855,44 @@ function resetMode1(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MODE 2 — compare, respects month range
+   MODE 2 — compare any two years, any month range
 ═══════════════════════════════════════════════════════════════ */
 function applyMode2(){
   const sm=parseInt(document.getElementById('cS').value);
   const em=parseInt(document.getElementById('cE').value);
-  const u25=document.getElementById('ck25').checked;
-  const u26=document.getElementById('ck26').checked;
+  const yA=document.getElementById('cYA').value.trim();
+  const yB=document.getElementById('cYB').value.trim();
+
+  if(!yA||!yB){ showErr('Please select both Year A and Year B to compare.'); return; }
 
   // Auto-swap if From > To
   const smF=Math.min(sm,em), emF=Math.max(sm,em);
 
-  // Filter each year strictly within chosen month range
-  const r25=u25?filterData({yearVal:'2025',monthStart:smF,monthEnd:emF,svc:svc2}):[];
-  const r26=u26?filterData({yearVal:'2026',monthStart:smF,monthEnd:emF,svc:svc2}):[];
-  const a25=agg(r25), a26=agg(r26);
+  // Filter each year within the chosen month range
+  const rA=filterData({yearVal:yA, monthStart:smF, monthEnd:emF, svc:svc2});
+  const rB=filterData({yearVal:yB, monthStart:smF, monthEnd:emF, svc:svc2});
+  const aA=agg(rA), aB=agg(rB);
 
   const rangeLabel=smF===emF?MN_FULL[smF]:`${MN_FULL[smF]} – ${MN_FULL[emF]}`;
   const svcLabel=svc2==='both'?'Both':svc2==='er'?'ER':'OPD';
   document.getElementById('lbl2').textContent=
-    `📅 ${rangeLabel}  ·  ${svcLabel}  |  2025: ${r25.length} rows  vs  2026: ${r26.length} rows`;
+    `📅 ${rangeLabel}  ·  ${svcLabel}  |  ${yA}: ${rA.length} rows  vs  ${yB}: ${rB.length} rows`;
 
-  renderKPI2(a25,a26);
-  renderCharts2(a25,a26);
+  // Keep tab label in sync
+  updateTabLabel();
+
+  renderKPI2(aA, aB, yA, yB);
+  renderCharts2(aA, aB, yA, yB);
 }
 
 function resetMode2(){
   document.getElementById('cS').value=1;
   document.getElementById('cE').value=12;
-  document.getElementById('ck25').checked=true;
-  document.getElementById('ck26').checked=true;
+  // Reset to default years (first two in data)
+  const opts=document.getElementById('cYA').options;
+  if(opts.length>1) document.getElementById('cYA').value=opts[1].value;
+  if(opts.length>2) document.getElementById('cYB').value=opts[2].value;
+  else if(opts.length>1) document.getElementById('cYB').value=opts[1].value;
   setCmpSvc('both'); applyMode2();
 }
 
@@ -900,57 +940,68 @@ function buildBadges(id,triage){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   KPI MODE 2
+   KPI MODE 2  — dynamic yA / yB
 ═══════════════════════════════════════════════════════════════ */
-function renderKPI2(a25,a26){
+function renderKPI2(aA,aB,yA,yB){
+  // Short labels: last 2 digits for display inside small KPI cards
+  const la=yA?String(yA).slice(-2):' A';
+  const lb=yB?String(yB).slice(-2):' B';
+  const CA='#1565C0', CB='#FF6F00'; // Year A=blue, Year B=orange
+
   const f=n=>Math.round(n||0).toLocaleString();
   const p=(n,t)=>t?(n/t*100).toFixed(1)+'%':'—';
 
-  function dHtml(v25,v26,sense){
-    if(!v25&&!v26) return '';
-    const diff=v26-v25;
-    const pct=v25?Math.abs(diff/v25*100).toFixed(1):'?';
+  function dHtml(vA,vB,sense){
+    if(!vA&&!vB) return '';
+    const diff=vB-vA;
+    const pc=vA?Math.abs(diff/vA*100).toFixed(1):'?';
     const arr=diff>0?'▲':diff<0?'▼':'—';
     let cls='neutral-d';
     if(diff!==0) cls=sense==='good_up'?(diff>0?'up-good':'dn-bad'):
                        sense==='bad_up' ?(diff>0?'up-bad':'dn-good'):'neutral-d';
-    return `<span class="${cls}">${arr}${pct}%</span>`;
+    return `<span class="${cls}">${arr}${pc}%</span>`;
   }
 
-  function setCmp(id,v25,v26,s25,s26,sense){
-    const el=document.getElementById(id);
-    if(!el) return;
+  function setCmp(id,vA,vB,sA,sB,sense){
+    const el=document.getElementById(id); if(!el) return;
     el.style.fontSize='13px'; el.style.fontWeight='700';
-    el.innerHTML=`<span style="color:#78909C;font-size:9px">25:</span>${f(v25)}&nbsp;<span style="color:#78909C;font-size:9px">26:</span>${f(v26)}`;
+    el.innerHTML=
+      `<span style="color:${CA};font-size:9px;font-weight:700">${la}:</span>`+
+      `<span style="color:${CA}">${f(vA)}</span>&nbsp;`+
+      `<span style="color:${CB};font-size:9px;font-weight:700">${lb}:</span>`+
+      `<span style="color:${CB}">${f(vB)}</span>`;
     const sub=document.getElementById(id+'s');
-    if(sub) sub.innerHTML=dHtml(v25,v26,sense)+(s25?`&nbsp;<span style="font-size:9px;color:#90A4AE">${s25}→${s26}</span>`:'');
+    if(sub) sub.innerHTML=dHtml(vA,vB,sense)+(sA?`&nbsp;<span style="font-size:9px;color:#90A4AE">${sA}→${sB}</span>`:'');
   }
 
-  setCmp('k0',a25.total,   a26.total,'','','good_up');
-  setCmp('k1',a25.admit,   a26.admit,   p(a25.admit,a25.total),  p(a26.admit,a26.total),'neutral_d');
-  setCmp('k2',a25.erTotal, a26.erTotal,'','','good_up');
-  setCmp('k3',a25.opdTotal,a26.opdTotal,'','','good_up');
-  setCmp('k4',a25.trauma,  a26.trauma,  p(a25.trauma,a25.total), p(a26.trauma,a26.total),'bad_up');
-  setCmp('k5',a25.nontrauma,a26.nontrauma,'','','good_up');
-  setCmp('k6',a25.newCases,a26.newCases,'','','good_up');
-  setCmp('k8',a25.referredOut,a26.referredOut,'','','neutral_d');
-  setCmp('k9',a25.referredIn, a26.referredIn, '','','neutral_d');
+  setCmp('k0',aA.total,      aB.total,'','','good_up');
+  setCmp('k1',aA.admit,      aB.admit,      p(aA.admit,aA.total),  p(aB.admit,aB.total),'neutral_d');
+  setCmp('k2',aA.erTotal,    aB.erTotal,'','','good_up');
+  setCmp('k3',aA.opdTotal,   aB.opdTotal,'','','good_up');
+  setCmp('k4',aA.trauma,     aB.trauma,     p(aA.trauma,aA.total), p(aB.trauma,aB.total),'bad_up');
+  setCmp('k5',aA.nontrauma,  aB.nontrauma,'','','good_up');
+  setCmp('k6',aA.newCases,   aB.newCases,'','','good_up');
+  setCmp('k8',aA.referredOut,aB.referredOut,'','','neutral_d');
+  setCmp('k9',aA.referredIn, aB.referredIn, '','','neutral_d');
 
-  const t25=Object.values(a25.triageMap).reduce((a,b)=>a+b,0);
-  const t26=Object.values(a26.triageMap).reduce((a,b)=>a+b,0);
-  const c25=(a25.triageMap[1]||0)+(a25.triageMap[2]||0);
-  const c26=(a26.triageMap[1]||0)+(a26.triageMap[2]||0);
+  const tA=Object.values(aA.triageMap).reduce((a,b)=>a+b,0);
+  const tB=Object.values(aB.triageMap).reduce((a,b)=>a+b,0);
+  const cA=(aA.triageMap[1]||0)+(aA.triageMap[2]||0);
+  const cB=(aB.triageMap[1]||0)+(aB.triageMap[2]||0);
   document.getElementById('k7h').innerHTML=
-    `<span style="font-size:9px;color:#546E7A">Critical L1+L2</span><br>
-     <span style="font-size:9px"><b>25:</b>${f(c25)}(${p(c25,t25)})&nbsp;<b>26:</b>${f(c26)}(${p(c26,t26)})</span>
-     ${dHtml(c25,c26,'bad_up')}`;
+    `<span style="font-size:9px;color:#546E7A">Critical L1+L2</span><br>`+
+    `<span style="font-size:9px">`+
+      `<b style="color:${CA}">${la}:</b>${f(cA)}(${p(cA,tA)})&nbsp;`+
+      `<b style="color:${CB}">${lb}:</b>${f(cB)}(${p(cB,tB)})`+
+    `</span> ${dHtml(cA,cB,'bad_up')}`;
   const bar=document.getElementById('k7bar');
   bar.style.height='auto'; bar.style.flexDirection='column';
   const seg=(tr,tt)=>[1,2,3,4,5].map(l=>
     `<div class="tmini-seg" style="width:${tt?((tr[l]||0)/tt*100).toFixed(1):0}%;background:${TL_COLORS[l-1]}"></div>`
   ).join('');
-  bar.innerHTML=`<div style="font-size:8px;color:#90A4AE">2025</div><div class="tmini">${seg(a25.triageMap,t25)}</div>
-    <div style="font-size:8px;color:#90A4AE">2026</div><div class="tmini">${seg(a26.triageMap,t26)}</div>`;
+  bar.innerHTML=
+    `<div style="font-size:8px;color:${CA};font-weight:700">${yA}</div><div class="tmini">${seg(aA.triageMap,tA)}</div>`+
+    `<div style="font-size:8px;color:${CB};font-weight:700">${yB}</div><div class="tmini">${seg(aB.triageMap,tB)}</div>`;
   document.getElementById('k7badges').innerHTML='';
 }
 
@@ -1134,7 +1185,7 @@ function renderDisease1(diseases,total){
 /* ═══════════════════════════════════════════════════════════════
    CHARTS MODE 2
 ═══════════════════════════════════════════════════════════════ */
-function renderCharts2(a25,a26){
+function renderCharts2(aA,aB,yA,yB){
   // mkDualMap now handles hiding single-mode canvases internally
   const CASE_C  =['#1565C0','#E53935','#43A047','#FF6F00','#9C27B0'];
   const GENDER_C=['#1976D2','#E91E63','#78909C','#FF6F00'];
@@ -1149,27 +1200,27 @@ function renderCharts2(a25,a26){
     return [...new Set([...Object.keys(m1),...Object.keys(m2)])]
       .filter(k=>!SKIP.test(k.trim())).sort();
   };
-  mkDualMap('casetype', mKeys(a25.caseMap,a26.caseMap),
-    a25.caseMap,a26.caseMap,CASE_C,'w-casetype');
-  mkDualMap('gender',   mKeys(a25.genderMap,a26.genderMap),
-    a25.genderMap,a26.genderMap,GENDER_C,'w-gender');
-  mkDualMap('tariff',   mKeys(a25.tariffMap,a26.tariffMap),
-    a25.tariffMap,a26.tariffMap,TARIFF_C,'w-tariff');
-  mkDualMap('nation',   mKeys(a25.nationMap,a26.nationMap),
-    a25.nationMap,a26.nationMap,NATION_C,'w-nation');
-  mkDualMap('refstatus',mKeysNoUnk(a25.refStatusMap,a26.refStatusMap),
-    a25.refStatusMap,a26.refStatusMap,REFS_C,'w-refstatus');
-  mkDualMap('reftype',  mKeysNoUnk(a25.refTypeMap,a26.refTypeMap),
-    a25.refTypeMap,a26.refTypeMap,REFT_C,'w-reftype');
+  mkDualMap('casetype', mKeys(aA.caseMap,aB.caseMap),
+    aA.caseMap,aB.caseMap,CASE_C,'w-casetype',yA,yB);
+  mkDualMap('gender',   mKeys(aA.genderMap,aB.genderMap),
+    aA.genderMap,aB.genderMap,GENDER_C,'w-gender',yA,yB);
+  mkDualMap('tariff',   mKeys(aA.tariffMap,aB.tariffMap),
+    aA.tariffMap,aB.tariffMap,TARIFF_C,'w-tariff',yA,yB);
+  mkDualMap('nation',   mKeys(aA.nationMap,aB.nationMap),
+    aA.nationMap,aB.nationMap,NATION_C,'w-nation',yA,yB);
+  mkDualMap('refstatus',mKeysNoUnk(aA.refStatusMap,aB.refStatusMap),
+    aA.refStatusMap,aB.refStatusMap,REFS_C,'w-refstatus',yA,yB);
+  mkDualMap('reftype',  mKeysNoUnk(aA.refTypeMap,aB.refTypeMap),
+    aA.refTypeMap,aB.refTypeMap,REFT_C,'w-reftype',yA,yB);
 
-  renderTriage2(a25,a26);
-  renderAge2(a25.ageBands,a26.ageBands);
-  renderDisease2(a25.diseases,a26.diseases);
+  renderTriage2(aA,aB,yA,yB);
+  renderAge2(aA.ageBands,aB.ageBands,yA,yB);
+  renderDisease2(aA.diseases,aB.diseases,yA,yB);
 }
 
 /* ── COMPARE MODE: Horizontal grouped bar (replaces dual donut) ──
    Always fits inside any card height. Labels always visible.      */
-function mkDualMap(key,keys,m25,m26,colors,wrapId){
+function mkDualMap(key,keys,mA,mB,colors,wrapId,yA,yB){
   const wrap=document.getElementById(wrapId);if(!wrap)return;
   // Remove old dual-donut wrappers
   const old=document.getElementById('dd-'+key);if(old)old.remove();
@@ -1184,7 +1235,6 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
   if(!cmpCv){
     cmpCv=document.createElement('canvas');
     cmpCv.id='cmp-cv-'+key;
-    // fill the cwrap container
     cmpCv.style.cssText='position:absolute;inset:0;width:100%;height:100%';
     wrap.style.position='relative';
     wrap.appendChild(cmpCv);
@@ -1192,14 +1242,15 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
   cmpCv.style.display='';
 
   // Top-8 categories by combined volume
-  const combined=keys.map(k=>({k,v:(m25[k]||0)+(m26[k]||0)}))
+  const combined=keys.map(k=>({k,v:(mA[k]||0)+(mB[k]||0)}))
     .sort((a,b)=>b.v-a.v).slice(0,8);
   const topKeys=combined.map(x=>x.k);
   const dispLabels=topKeys.map(k=>k.length>17?k.substring(0,16)+'…':k);
-  const d25=topKeys.map(k=>m25[k]||0);
-  const d26=topKeys.map(k=>m26[k]||0);
-  const tot25=d25.reduce((a,b)=>a+b,0);
-  const tot26=d26.reduce((a,b)=>a+b,0);
+  const dA=topKeys.map(k=>mA[k]||0);
+  const dB=topKeys.map(k=>mB[k]||0);
+  const totA=dA.reduce((a,b)=>a+b,0);
+  const totB=dB.reduce((a,b)=>a+b,0);
+  const lA=yA||'Year A', lB=yB||'Year B';
 
   killChart('cmp-'+key);
   charts['cmp-'+key]=new Chart(cmpCv.getContext('2d'),{
@@ -1207,8 +1258,8 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
     data:{
       labels:dispLabels,
       datasets:[
-        {label:'2025',data:d25,backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:2},
-        {label:'2026',data:d26,backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:2}
+        {label:lA,data:dA,backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:2},
+        {label:lB,data:dB,backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:2}
       ]
     },
     options:{
@@ -1218,7 +1269,7 @@ function mkDualMap(key,keys,m25,m26,colors,wrapId){
         legend:{position:'top',align:'end',labels:{font:{size:8},padding:3,boxWidth:9}},
         tooltip:{callbacks:{
           title:items=>topKeys[items[0].dataIndex]||'',
-          label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,c.datasetIndex===0?tot25:tot26)+')'
+          label:c=>' '+fmt(c.raw)+' ('+pct(c.raw,c.datasetIndex===0?totA:totB)+')'
         }}
       },
       scales:{
@@ -1239,7 +1290,8 @@ function clearCmpCharts(){
 }
 
 /* ── TRIAGE GROUPED BAR MODE 2 ── */
-function renderTriage2(a25,a26){
+function renderTriage2(aA,aB,yA,yB){
+  const lA=yA||'Year A', lB=yB||'Year B';
   killChart('ch-triage');
   const cv=document.getElementById('ch-triage');if(cv)cv.style.display='';
   clearTriageDual();
@@ -1248,9 +1300,9 @@ function renderTriage2(a25,a26){
     type:'bar',
     data:{labels:TL_NAMES.map((_,i)=>`L${i+1}`),
       datasets:[
-        {label:'2025',data:[1,2,3,4,5].map(l=>a25.triageMap[l]||0),
+        {label:lA,data:[1,2,3,4,5].map(l=>aA.triageMap[l]||0),
           backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:3},
-        {label:'2026',data:[1,2,3,4,5].map(l=>a26.triageMap[l]||0),
+        {label:lB,data:[1,2,3,4,5].map(l=>aB.triageMap[l]||0),
           backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:3}
       ]},
     options:{responsive:true,maintainAspectRatio:false,
@@ -1259,31 +1311,34 @@ function renderTriage2(a25,a26){
       scales:{x:{ticks:{font:{size:8}},grid:{display:false}},
         y:{ticks:{font:{size:7}},beginAtZero:true}}}
   });
-  const t25=Object.values(a25.triageMap).reduce((a,b)=>a+b,0);
-  const t26=Object.values(a26.triageMap).reduce((a,b)=>a+b,0);
+  const tA=Object.values(aA.triageMap).reduce((a,b)=>a+b,0);
+  const tB=Object.values(aB.triageMap).reduce((a,b)=>a+b,0);
   document.getElementById('tl-table').innerHTML=`
-    <table class="tl-tbl"><thead><tr><th>L</th><th>Name</th><th>2025</th><th>2026</th><th>Δ</th></tr></thead>
+    <table class="tl-tbl"><thead><tr><th>L</th><th>Name</th>
+      <th style="color:#1565C0">${lA}</th>
+      <th style="color:#FF6F00">${lB}</th><th>Δ</th></tr></thead>
     <tbody>${[1,2,3,4,5].map(l=>{
-      const v25=a25.triageMap[l]||0,v26=a26.triageMap[l]||0;
-      const d=v25?((v26-v25)/v25*100).toFixed(1)+'%':'—';
-      const arr=v26>v25?'▲':v26<v25?'▼':'—';
-      const dc=(l<=2)?(v26>v25?'color:#B71C1C':'color:#2E7D32'):(v26>v25?'color:#2E7D32':'color:#B71C1C');
+      const vA=aA.triageMap[l]||0,vB=aB.triageMap[l]||0;
+      const d=vA?((vB-vA)/vA*100).toFixed(1)+'%':'—';
+      const arr=vB>vA?'▲':vB<vA?'▼':'—';
+      const dc=(l<=2)?(vB>vA?'color:#B71C1C':'color:#2E7D32'):(vB>vA?'color:#2E7D32':'color:#B71C1C');
       return `<tr><td><b style="color:${TL_COLORS[l-1]}">${l}</b></td>
         <td style="text-align:left">${TL_NAMES[l-1]}</td>
-        <td>${fmt(v25)}</td><td>${fmt(v26)}</td>
+        <td>${fmt(vA)}</td><td>${fmt(vB)}</td>
         <td style="${dc}">${arr} ${d}</td></tr>`;
     }).join('')}</tbody></table>`;
 }
 
 /* ── AGE MODE 2 ── */
-function renderAge2(ag25,ag26){
+function renderAge2(agA,agB,yA,yB){
+  const lA=yA||'Year A', lB=yB||'Year B';
   const cv=document.getElementById('ch-age');if(cv)cv.style.display='';
   clearDual('age-d');killChart('ch-age');
   charts['ch-age']=new Chart(document.getElementById('ch-age').getContext('2d'),{
     type:'bar',
     data:{labels:AGE_BANDS.map(b=>b.label),datasets:[
-      {label:'2025',data:ag25.map(b=>b.count),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:2},
-      {label:'2026',data:ag26.map(b=>b.count),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:2}
+      {label:lA,data:agA.map(b=>b.count),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1,borderRadius:2},
+      {label:lB,data:agB.map(b=>b.count),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1,borderRadius:2}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}}},
@@ -1292,31 +1347,34 @@ function renderAge2(ag25,ag26){
 }
 
 /* ── DISEASE MODE 2 ── */
-function renderDisease2(dx25,dx26){
+function renderDisease2(dxA,dxB,yA,yB){
+  const lA=yA||'Year A', lB=yB||'Year B';
   const cv=document.getElementById('ch-disease');if(cv)cv.style.display='';
   clearDual('disease-d');const wrap=document.getElementById('dx-table');
   const cm={};
-  [...(dx25||[]),...(dx26||[])].forEach(([n,v])=>{cm[n]=(cm[n]||0)+v;});
+  [...(dxA||[]),...(dxB||[])].forEach(([n,v])=>{cm[n]=(cm[n]||0)+v;});
   const top5=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
-  const m25=Object.fromEntries(dx25||[]),m26=Object.fromEntries(dx26||[]);
+  const mA=Object.fromEntries(dxA||[]),mB=Object.fromEntries(dxB||[]);
   if(!top5.length){emptyCV('ch-disease','No diagnosis data');if(wrap)wrap.innerHTML='';return;}
   killChart('ch-disease');
   charts['ch-disease']=new Chart(document.getElementById('ch-disease').getContext('2d'),{
     type:'bar',
     data:{labels:top5.map((n,i)=>MEDALS[i]+' '+n.substring(0,18)),
       datasets:[
-        {label:'2025',data:top5.map(n=>m25[n]||0),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1},
-        {label:'2026',data:top5.map(n=>m26[n]||0),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1}
+        {label:lA,data:top5.map(n=>mA[n]||0),backgroundColor:'#1565C0bb',borderColor:'#1565C0',borderWidth:1},
+        {label:lB,data:top5.map(n=>mB[n]||0),backgroundColor:'#FF6F00bb',borderColor:'#FF6F00',borderWidth:1}
       ]},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
       plugins:{legend:{position:'top',labels:{font:{size:9},padding:3}}},
       scales:{x:{ticks:{font:{size:8}}},y:{ticks:{font:{size:8}}}}}
   });
   if(wrap)wrap.innerHTML=`<table class="dx-tbl">
-    <thead><tr><th>#</th><th style="text-align:left">Diagnosis</th><th>2025</th><th>2026</th></tr></thead>
+    <thead><tr><th>#</th><th style="text-align:left">Diagnosis</th>
+      <th style="color:#1565C0">${lA}</th>
+      <th style="color:#FF6F00">${lB}</th></tr></thead>
     <tbody>${top5.map((n,i)=>`<tr><td>${MEDALS[i]}</td>
       <td style="text-align:left">${n.substring(0,22)}</td>
-      <td>${fmt(m25[n]||0)}</td><td>${fmt(m26[n]||0)}</td></tr>`).join('')}</tbody></table>`;
+      <td>${fmt(mA[n]||0)}</td><td>${fmt(mB[n]||0)}</td></tr>`).join('')}</tbody></table>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
